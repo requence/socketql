@@ -1,0 +1,62 @@
+---
+title: createServer
+description: API reference for the createServer function.
+---
+
+Creates and configures a Socket.IO GraphQL server with live query support.
+
+## Signature
+
+```ts
+function createServer<Context>(options: ServerOptions<Context>): {
+  server: IoServer
+  namespace: Namespace
+  liveQueryStore: ExtendedLiveQueryStore
+  attach: (baseServer: ServerInstance) => void
+  addSchema: (opts: { typeDefs: TypeSource; resolvers: IResolvers }) => void
+  generateIntrospection: () => Promise<IntrospectionQuery>
+}
+```
+
+## Options
+
+| Option             | Type                                        | Default          | Description                                    |
+| ------------------ | ------------------------------------------- | ---------------- | ---------------------------------------------- |
+| `path`             | `string`                                    | `'/ws/'`         | Socket.IO server path                          |
+| `transports`       | `string[]`                                  | `['websocket']`  | Allowed transports                             |
+| `graphqlNamespace`  | `string`                                   | `'graphql'`      | Socket.IO namespace for GraphQL                |
+| `extendContext`    | `(ctx) => Context`                          | `() => ({})`     | Extend GraphQL context per connection          |
+| `onConnect`        | `(socket) => void`                          | —                | Called when a client connects                  |
+| `onDisconnect`     | `(socket, reason) => void`                  | —                | Called when a client disconnects               |
+| `liveQueryStore`   | `LiveQueryStoreOptions`                     | `{}`             | Redis URL and channel for distributed live queries |
+| `formatError`      | `(error) => GraphQLError`                   | —                | Transform GraphQL errors before sending        |
+| `maxUploadSize`    | `number`                                    | —                | Max upload size in bytes                       |
+| `transformSchema`  | `SchemaTransformer`                         | identity         | Transform the schema after creation            |
+| `pingInterval`     | `number`                                    | `25000`          | Socket.IO ping interval (ms)                   |
+| `pingTimeout`      | `number`                                    | `20000`          | Socket.IO ping timeout (ms)                    |
+| `redisUrl`         | `string`                                    | —                | Redis URL for Socket.IO adapter                |
+| `wrapExecute`      | `(execute, context) => result`              | passthrough      | Wrap GraphQL execution (e.g. for tracing)      |
+
+## Return Values
+
+| Property                | Type                        | Description                                |
+| ----------------------- | --------------------------- | ------------------------------------------ |
+| `server`                | `IoServer`                  | The raw Socket.IO server instance          |
+| `namespace`             | `Namespace`                 | The GraphQL namespace                      |
+| `liveQueryStore`        | `ExtendedLiveQueryStore`    | Live query store for invalidation          |
+| `attach`                | `(server) => void`          | Attach to an HTTP/HTTPS server             |
+| `addSchema`             | `(opts) => void`            | Register type definitions and resolvers    |
+| `generateIntrospection` | `() => Promise<...>`        | Generate introspection result              |
+
+## GraphQLContext
+
+Every resolver receives a context with these properties:
+
+| Property         | Type                    | Description                                   |
+| ---------------- | ----------------------- | --------------------------------------------- |
+| `namespace`      | `Namespace`             | The Socket.IO namespace                       |
+| `socket`         | `Socket`                | The current client's socket                   |
+| `queriedFields`  | `QueriedFields`         | Parsed field selection helpers                |
+| `unauthorized`   | `(msg) => never`        | Throw an unauthorized GraphQL error           |
+| `loader`         | `(load, name?) => DataLoader` | Get or create a batched DataLoader       |
+| `liveQueryStore` | `ExtendedLiveQueryStore`| Live query invalidation                       |
