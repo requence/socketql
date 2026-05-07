@@ -1,0 +1,59 @@
+---
+title: React Hooks
+description: Using SocketQL React hooks for queries and mutations.
+---
+
+The `@requence/socketql/client/react` module provides Suspense-ready hooks built on top of URQL.
+
+## useQuery
+
+A thin wrapper around URQL's `useQuery` that throws on errors (for error boundaries) and returns data directly:
+
+```tsx
+import { useQuery } from '@requence/socketql/client/react'
+
+function UserList() {
+  const data = useQuery({
+    query: UsersDocument,
+  })
+
+  return (
+    <ul>
+      {data.users.map(user => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  )
+}
+```
+
+## useMutation
+
+A wrapper around URQL's `useMutation` with built-in Suspense support and cache invalidation:
+
+```tsx
+import { useMutation } from '@requence/socketql/client/react'
+
+function CreateUser() {
+  const [result, execute] = useMutation({
+    query: CreateUserDocument,
+    invalidate: 'Users',     // invalidate cached "Users" query
+    waitOn: 'Users',         // wait for the Users query to re-resolve
+  })
+
+  return (
+    <button onClick={() => execute({ name: 'Alice' })}>
+      Create User
+    </button>
+  )
+}
+```
+
+### Options
+
+| Option       | Type                              | Description                                              |
+| ------------ | --------------------------------- | -------------------------------------------------------- |
+| `query`      | `DocumentInput`                   | The mutation document                                    |
+| `invalidate` | `string \| DocumentNode \| Array` | Queries to invalidate after mutation                     |
+| `suspense`   | `boolean`                         | Whether to trigger Suspense (default: `true`)            |
+| `waitOn`     | `string \| DocumentNode \| Array` | Wait for these queries to re-resolve before un-suspending|

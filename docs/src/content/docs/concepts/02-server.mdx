@@ -1,0 +1,72 @@
+---
+title: Server
+description: Setting up the SocketQL server.
+---
+
+The server module creates a Socket.IO server with a full GraphQL execution pipeline, including live query support and schema transformation.
+
+## createServer
+
+```ts
+import { createServer } from '@requence/socketql/server'
+
+const { server, namespace, liveQueryStore, attach, addSchema } = createServer({
+  path: '/ws/',
+  transports: ['websocket'],
+  redisUrl: 'redis://localhost:6379',
+})
+```
+
+## Adding Schemas
+
+Use `addSchema` to register GraphQL type definitions and resolvers:
+
+```ts
+addSchema({
+  typeDefs: /* GraphQL */ `
+    type Query {
+      hello: String! @live
+    }
+  `,
+  resolvers: {
+    Query: {
+      hello: () => 'world',
+    },
+  },
+})
+```
+
+## Attaching to HTTP
+
+```ts
+import { createServer as createHTTPServer } from 'node:http'
+
+const httpServer = createHTTPServer()
+attach(httpServer)
+httpServer.listen(4000)
+```
+
+## Context Extension
+
+Extend the GraphQL context per connection:
+
+```ts
+createServer({
+  extendContext: ({ socket }) => ({
+    userId: socket.handshake.auth.userId,
+  }),
+})
+```
+
+## Lifecycle Hooks
+
+```ts
+createServer({
+  onConnect: (socket) => {
+    console.log('connected:', socket.id)
+  },
+  onDisconnect: (socket, reason) => {
+    console.log('disconnected:', socket.id, reason)
+  },
+})
+```

@@ -1,0 +1,51 @@
+---
+title: Introduction
+description: What SocketQL is and how it works.
+---
+
+`@requence/socketql` is a Socket.IO-based GraphQL transport that provides real-time communication between server and client using live queries, subscriptions, and JSON diff-patching.
+
+## Installation
+
+```bash
+npm install @requence/socketql
+```
+
+## Package Exports
+
+The library ships three entry points:
+
+| Export Path                      | Description                                     |
+| -------------------------------- | ----------------------------------------------- |
+| `@requence/socketql/server`      | Server-side: `createServer`, live query store    |
+| `@requence/socketql/client`      | Client-side: `createClient` with URQL exchanges  |
+| `@requence/socketql/client/react`| React hooks: `useQuery`, `useMutation`           |
+
+## How It Works
+
+1. **Server** creates a Socket.IO namespace with a GraphQL execution layer
+2. **Client** connects via WebSocket and sends GraphQL operations through a custom URQL exchange
+3. **Live queries** are tracked with resource identifiers — when the server invalidates an identifier, all subscribed queries re-execute and the diff is pushed to clients
+
+## Quick Example
+
+```ts
+// Server
+import { createServer } from '@requence/socketql/server'
+
+const { addSchema, attach } = createServer({
+  path: '/ws/',
+})
+
+addSchema({ typeDefs, resolvers })
+attach(httpServer)
+```
+
+```ts
+// Client
+import { createClient } from '@requence/socketql/client'
+
+const { client } = createClient({
+  path: '/ws/',
+})
+```

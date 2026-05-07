@@ -1,0 +1,56 @@
+---
+title: React Hooks
+description: API reference for the React hooks.
+---
+
+All hooks are exported from `@requence/socketql/client/react`.
+
+## useQuery
+
+Suspense-ready query hook. Throws on errors (use with an error boundary).
+
+```ts
+function useQuery<Data, Variables>(
+  args: UseQueryArgs<Variables, Data>
+): Data
+```
+
+### Parameters
+
+Accepts all URQL `UseQueryArgs` options:
+
+| Option            | Type            | Description                          |
+| ----------------- | --------------- | ------------------------------------ |
+| `query`           | `DocumentInput` | The GraphQL query document           |
+| `variables`       | `Variables`     | Query variables                      |
+| `requestPolicy`   | `string`        | URQL request policy                  |
+| `pause`           | `boolean`       | Pause the query                      |
+
+### Returns
+
+Returns `Data` directly (not wrapped in a result object). Throws the URQL error if the query fails.
+
+---
+
+## useMutation
+
+Suspense-aware mutation hook with cache invalidation support.
+
+```ts
+function useMutation<Data, Variables>(
+  args: UseMutationArgs<Data, Variables>
+): readonly [OperationResult, executeFn]
+```
+
+### Parameters
+
+| Option       | Type                              | Default | Description                                        |
+| ------------ | --------------------------------- | ------- | -------------------------------------------------- |
+| `query`      | `DocumentInput`                   | —       | The mutation document                              |
+| `invalidate` | `string \| DocumentNode \| Array` | —       | Queries to invalidate on success                   |
+| `suspense`   | `boolean`                         | `true`  | Whether to trigger Suspense during execution       |
+| `waitOn`     | `string \| DocumentNode \| Array` | —       | Wait for these queries to re-resolve before un-suspending |
+
+### Returns
+
+A tuple of `[result, execute]`, same as URQL's `useMutation`.

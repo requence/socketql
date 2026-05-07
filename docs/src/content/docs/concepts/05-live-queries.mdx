@@ -1,0 +1,80 @@
+---
+title: Live Queries
+description: How live queries work in SocketQL.
+---
+
+Live queries allow the server to push updates to clients whenever the underlying data changes, using resource-based invalidation and JSON diff-patching.
+
+## How It Works
+
+1. A query is marked as `@live` in the schema
+2. The server tracks which resource identifiers the query accesses
+3. When a mutation invalidates one of those identifiers, the query re-executes
+4. Only the diff is sent to the client via `jsondiffpatch`
+
+## Marking Queries as Live
+
+Add the `@live` directive to query fields in your schema:
+
+```graphql
+type Query {
+  users: [User!]! @live
+}
+```
+
+## Invalidating Resources
+
+From within a resolver, use the `liveQueryStore` from context:
+
+```ts
+const resolvers = {
+  Mutation: {
+    createUser: async (_, args, context) => {
+      const user = await db.createUser(args)
+      await context.liveQueryStore.invalidate('Query.users')
+      return user
+    },
+  },
+}
+```
+
+### Invalidation Helpers
+
+The `invalidate` function accepts multiple formats:
+
+```ts
+// Simple string
+liveQueryStore.invalidate('Query.users')
+
+// Multiple identifiers
+liveQueryStore.invalidate(['Query.users', 'Query.userCount'])
+
+// Builder function
+liveQueryStore.invalidate((tools) => [
+  tools.id('User', user.id),
+  tools.args('Query.user', { id: user.id }),
+])
+```
+
+## Live Identifier Directive
+
+Use `@liveIdentifier` on arguments to automatically scope live query subscriptions:
+
+```graphql
+type Query {
+  user(id: ID! @liveIdentifier): User @live
+}
+```
+
+## Redis-Backed Invalidation
+
+For multi-instance deployments, pass `redisUrl` to share invalidations across servers:
+
+```ts
+createServer({
+  liveQueryStore: {
+    redisUrl: 'redis://localhost:6379',
+    redisChannel: 'my-app-live-queries',
+  },
+})
+```
