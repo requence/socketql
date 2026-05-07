@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.1.0
+
+### Minor Changes
+
+- [`342bd59`](https://github.com/requence/socketql/commit/342bd59b523f2e14494605f5207ed61ef0e0e8e1) Thanks [@Torsten85](https://github.com/Torsten85)! - added bun support
+
 ## 1.0.0
 
 ### Major Changes
