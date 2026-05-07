@@ -1,0 +1,50 @@
+---
+title: SocketQL
+description: Socket.IO-based GraphQL transport with live queries, URQL client, and React hooks.
+template: splash
+hero:
+  tagline: Real-time GraphQL over Socket.IO — live queries, URQL exchanges, and React hooks out of the box.
+  actions:
+    - text: Get Started
+      link: /concepts/01-introduction/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/requence/socketql
+      icon: external
+      variant: minimal
+---
+
+import LucideIcon from '../../components/LucideIcon.astro';
+
+## Why @requence/socketql?
+
+<div class="card-grid">
+  <article class="feature-card">
+    <div class="feature-icon">
+      <LucideIcon name="Zap" size={22} />
+    </div>
+    <h3>Real-Time by Default</h3>
+    <p>WebSocket-first transport via Socket.IO — no polling, no long HTTP requests. Results stream instantly.</p>
+  </article>
+  <article class="feature-card">
+    <div class="feature-icon">
+      <LucideIcon name="Radio" size={22} />
+    </div>
+    <h3>Live Queries</h3>
+    <p>Declarative live queries with resource-based invalidation — the server pushes updates, the client patches diffs.</p>
+  </article>
+  <article class="feature-card">
+    <div class="feature-icon">
+      <LucideIcon name="Layers" size={22} />
+    </div>
+    <h3>URQL Exchanges</h3>
+    <p>Custom cache, emit, and hold-subscription exchanges that integrate seamlessly with the URQL client.</p>
+  </article>
+  <article class="feature-card">
+    <div class="feature-icon">
+      <LucideIcon name="Component" size={22} />
+    </div>
+    <h3>React Hooks</h3>
+    <p>Suspense-ready useQuery and useMutation hooks with built-in cache invalidation and optimistic UI support.</p>
+  </article>
+</div>

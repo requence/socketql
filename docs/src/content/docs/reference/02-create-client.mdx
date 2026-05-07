@@ -1,0 +1,57 @@
+---
+title: createClient
+description: API reference for the createClient function.
+---
+
+Creates a Socket.IO-backed URQL client with custom exchanges.
+
+## Signature
+
+```ts
+function createClient(options: ClientOptions): {
+  client: UrqlClient
+  manager: SocketManager
+  invalidate: (target: string | DocumentNode | Array) => void
+}
+```
+
+## Options
+
+| Option             | Type          | Default         | Description                                |
+| ------------------ | ------------- | --------------- | ------------------------------------------ |
+| `path`             | `string`      | `'/ws/'`        | Socket.IO server path                      |
+| `transports`       | `string[]`    | `['websocket']` | Allowed transports                         |
+| `graphqlNamespace` | `string`      | `'graphql'`     | Socket.IO namespace to connect to          |
+| `onConnect`        | `() => object`| —               | Return auth data for the connection        |
+
+## Return Values
+
+| Property     | Type             | Description                                   |
+| ------------ | ---------------- | --------------------------------------------- |
+| `client`     | `UrqlClient`     | Configured URQL client with Suspense enabled  |
+| `manager`    | `SocketManager`  | The underlying Socket.IO manager              |
+| `invalidate` | `Function`       | Manually invalidate cached operation results  |
+
+## invalidate
+
+```ts
+// Single query by operation name
+invalidate('Users')
+
+// Single query by document node
+invalidate(UsersDocument)
+
+// Multiple queries
+invalidate(['Users', ProjectsDocument])
+```
+
+## waitForResult
+
+Exported from `@requence/socketql/client`, this utility returns a promise that resolves when specific query results arrive:
+
+```ts
+import { waitForResult } from '@requence/socketql/client'
+
+await waitForResult('Users')
+await waitForResult(['Users', 'Projects'])
+```
