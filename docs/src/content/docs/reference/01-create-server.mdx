@@ -5,14 +5,31 @@ description: API reference for the createServer function.
 
 Creates and configures a Socket.IO GraphQL server with live query support.
 
-## Signature
+## Signature (Node.js)
 
 ```ts
+import { createServer } from '@requence/socketql/server'
+
 function createServer<Context>(options: ServerOptions<Context>): {
   server: IoServer
   namespace: Namespace
   liveQueryStore: ExtendedLiveQueryStore
   attach: (baseServer: ServerInstance) => void
+  addSchema: (opts: { typeDefs: TypeSource; resolvers: IResolvers }) => void
+  generateIntrospection: () => Promise<IntrospectionQuery>
+}
+```
+
+## Signature (Bun)
+
+```ts
+import { createServer } from '@requence/socketql/server/bun'
+
+function createServer<Context>(options: ServerOptions<Context>): {
+  server: IoServer
+  namespace: Namespace
+  liveQueryStore: ExtendedLiveQueryStore
+  handler: () => { fetch, websocket, idleTimeout }
   addSchema: (opts: { typeDefs: TypeSource; resolvers: IResolvers }) => void
   generateIntrospection: () => Promise<IntrospectionQuery>
 }
@@ -39,14 +56,29 @@ function createServer<Context>(options: ServerOptions<Context>): {
 
 ## Return Values
 
-| Property                | Type                        | Description                                |
-| ----------------------- | --------------------------- | ------------------------------------------ |
-| `server`                | `IoServer`                  | The raw Socket.IO server instance          |
-| `namespace`             | `Namespace`                 | The GraphQL namespace                      |
-| `liveQueryStore`        | `ExtendedLiveQueryStore`    | Live query store for invalidation          |
-| `attach`                | `(server) => void`          | Attach to an HTTP/HTTPS server             |
-| `addSchema`             | `(opts) => void`            | Register type definitions and resolvers    |
-| `generateIntrospection` | `() => Promise<...>`        | Generate introspection result              |
+Shared across both entry points:
+
+| Property                | Type                        | Description                                      |
+| ----------------------- | --------------------------- | ------------------------------------------------ |
+| `server`                | `IoServer`                  | The raw Socket.IO server instance                |
+| `namespace`             | `Namespace`                 | The GraphQL namespace                            |
+| `liveQueryStore`        | `ExtendedLiveQueryStore`    | Live query store for invalidation                |
+| `addSchema`             | `(opts) => void`            | Register type definitions and resolvers          |
+| `generateIntrospection` | `() => Promise<...>`        | Generate introspection result                    |
+
+Node.js only:
+
+| Property | Type               | Description                             |
+| -------- | ------------------ | --------------------------------------- |
+| `attach` | `(server) => void` | Attach to a Node.js HTTP/HTTPS/HTTP2 server |
+
+Bun only:
+
+| Property         | Type                                       | Description                                    |
+| ---------------- | ------------------------------------------ | ---------------------------------------------- |
+| `handler`        | `() => { fetch, websocket, idleTimeout }`  | Returns Bun-ready config to spread into `Bun.serve()` or `export default` |
+| `handleRequest`  | `(req, server) => Promise<Response>`       | Handle a single Socket.IO request directly     |
+| `withServer`     | `(fallback) => (req, server) => Response`  | Intercepts SocketQL requests, delegates the rest to the fallback |
 
 ## GraphQLContext
 

@@ -55,6 +55,7 @@ const result = await Bun.build({
     '@n1ru4l/push-pull-async-iterable-iterator',
     '@n1ru4l/socket-io-graphql-client',
     '@n1ru4l/socket-io-graphql-server',
+    '@socket.io/bun-engine',
     '@socket.io/redis-adapter',
   ],
 })

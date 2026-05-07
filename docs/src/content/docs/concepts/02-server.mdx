@@ -36,7 +36,9 @@ addSchema({
 })
 ```
 
-## Attaching to HTTP
+## Attaching to a Server
+
+### Node.js
 
 ```ts
 import { createServer as createHTTPServer } from 'node:http'
@@ -45,6 +47,40 @@ const httpServer = createHTTPServer()
 attach(httpServer)
 httpServer.listen(4000)
 ```
+
+### Bun
+
+Import from `@requence/socketql/server/bun` instead — it replaces `attach` with a `handler()` method:
+
+```ts
+import { createServer } from '@requence/socketql/server/bun'
+
+const { addSchema, handler } = createServer({ path: '/ws/' })
+
+addSchema({ typeDefs, resolvers })
+
+export default { port: 4000, ...handler() }
+```
+
+:::tip[Using with Hono or other frameworks]
+Use `withServer` to intercept SocketQL requests and fall through to your app:
+
+```ts
+import { Hono } from 'hono'
+import { createServer } from '@requence/socketql/server/bun'
+
+const app = new Hono()
+const { addSchema, withServer, handler } = createServer({ path: '/ws/' })
+
+addSchema({ typeDefs, resolvers })
+
+export default {
+  port: 4000,
+  ...handler(),
+  fetch: withServer(app.fetch),
+}
+```
+:::
 
 ## Context Extension
 

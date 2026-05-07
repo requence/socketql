@@ -13,13 +13,14 @@ npm install @requence/socketql
 
 ## Package Exports
 
-The library ships three entry points:
+The library ships four entry points:
 
-| Export Path                      | Description                                     |
-| -------------------------------- | ----------------------------------------------- |
-| `@requence/socketql/server`      | Server-side: `createServer`, live query store    |
-| `@requence/socketql/client`      | Client-side: `createClient` with URQL exchanges  |
-| `@requence/socketql/client/react`| React hooks: `useQuery`, `useMutation`           |
+| Export Path                       | Description                                     |
+| --------------------------------- | ----------------------------------------------- |
+| `@requence/socketql/server`       | Server-side for Node.js: `createServer` with `attach` |
+| `@requence/socketql/server/bun`   | Server-side for Bun: `createServer` with `handler` |
+| `@requence/socketql/client`       | Client-side: `createClient` with URQL exchanges  |
+| `@requence/socketql/client/react` | React hooks: `useQuery`, `useMutation`           |
 
 ## How It Works
 
@@ -30,7 +31,7 @@ The library ships three entry points:
 ## Quick Example
 
 ```ts
-// Server
+// Server (Node.js)
 import { createServer } from '@requence/socketql/server'
 
 const { addSchema, attach } = createServer({
@@ -39,6 +40,19 @@ const { addSchema, attach } = createServer({
 
 addSchema({ typeDefs, resolvers })
 attach(httpServer)
+```
+
+```ts
+// Server (Bun)
+import { createServer } from '@requence/socketql/server/bun'
+
+const { addSchema, handler } = createServer({
+  path: '/ws/',
+})
+
+addSchema({ typeDefs, resolvers })
+
+export default { port: 4000, ...handler() }
 ```
 
 ```ts
