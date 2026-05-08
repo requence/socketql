@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.2.0
+
+### Minor Changes
+
+- [`23d92c9`](https://github.com/requence/socketql/commit/23d92c91f6ee0159e14fd2d6332147a4784076ad) Thanks [@Torsten85](https://github.com/Torsten85)! - additional way of adding schemas
+
 ## 1.1.0
 
 ### Minor Changes
