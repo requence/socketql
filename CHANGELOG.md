@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.2.1
+
+### Patch Changes
+
+- [`704dcc8`](https://github.com/requence/socketql/commit/704dcc852147bc7ac555fb45dac65ef8e68c38f2) Thanks [@Torsten85](https://github.com/Torsten85)! - correctly externalized redis
+
 ## 1.2.0
 
 ### Minor Changes
