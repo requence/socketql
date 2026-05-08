@@ -20,6 +20,12 @@
       "import": "./dist/server/bun.js",
       "default": "./dist/server/bun.js"
     },
+    "./server/redis": {
+      "bun": "./src/server/redis.ts",
+      "types": "./dist/server/redis.d.ts",
+      "import": "./dist/server/redis.js",
+      "default": "./dist/server/redis.js"
+    },
     "./client": {
       "bun": "./src/client/index.ts",
       "types": "./dist/client/index.d.ts",

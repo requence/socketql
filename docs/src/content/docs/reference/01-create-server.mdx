@@ -45,14 +45,13 @@ function createServer<Context>(options: ServerOptions<Context>): {
 | `extendContext`    | `(ctx) => Context`                          | `() => ({})`     | Extend GraphQL context per connection          |
 | `onConnect`        | `(socket) => void`                          | —                | Called when a client connects                  |
 | `onDisconnect`     | `(socket, reason) => void`                  | —                | Called when a client disconnects               |
-| `liveQueryStore`   | `LiveQueryStoreOptions`                     | `{}`             | Redis URL and channel for distributed live queries |
 | `formatError`      | `(error) => GraphQLError`                   | —                | Transform GraphQL errors before sending        |
 | `maxUploadSize`    | `number`                                    | —                | Max upload size in bytes                       |
 | `transformSchema`  | `SchemaTransformer`                         | identity         | Transform the schema after creation            |
 | `schemas`          | `SocketQLSchema<Context>[]`                 | —                | Pre-register schemas at creation time          |
 | `pingInterval`     | `number`                                    | `25000`          | Socket.IO ping interval (ms)                   |
 | `pingTimeout`      | `number`                                    | `20000`          | Socket.IO ping timeout (ms)                    |
-| `redisUrl`         | `string`                                    | —                | Redis URL for Socket.IO adapter                |
+| `redis`            | `RedisAdapter`                              | —                | Redis adapter from `createRedisAdapter`        |
 | `wrapExecute`      | `(execute, context) => result`              | passthrough      | Wrap GraphQL execution (e.g. for tracing)      |
 
 ## Return Values
@@ -125,3 +124,45 @@ Every resolver receives a context with these properties:
 | `unauthorized`   | `(msg) => never`        | Throw an unauthorized GraphQL error           |
 | `loader`         | `(load, name?) => DataLoader` | Get or create a batched DataLoader       |
 | `liveQueryStore` | `ExtendedLiveQueryStore`| Live query invalidation                       |
+
+## createRedisAdapter
+
+Imported from `@requence/socketql/server/redis`. Creates a Redis adapter that provides both Socket.IO multi-instance coordination and Redis-backed live query invalidation.
+
+```ts
+import { createRedisAdapter } from '@requence/socketql/server/redis'
+
+function createRedisAdapter(options: RedisAdapterOptions): RedisAdapter
+```
+
+### Options
+
+| Option             | Type     | Default                      | Description                          |
+| ------------------ | -------- | ---------------------------- | ------------------------------------ |
+| `url`              | `string` | —                            | Redis connection URL (required)      |
+| `liveQueryChannel` | `string` | `'requence-socketql-sync'`   | Redis pub/sub channel for live query invalidation |
+
+### Return Value
+
+| Property         | Type                     | Description                                  |
+| ---------------- | ------------------------ | -------------------------------------------- |
+| `adapter`        | `RedisAdapter`           | Socket.IO Redis adapter for multi-instance coordination |
+| `liveQueryStore` | `ExtendedLiveQueryStore` | Redis-backed live query store                |
+
+### Example
+
+```ts
+import { createServer } from '@requence/socketql/server'
+import { createRedisAdapter } from '@requence/socketql/server/redis'
+
+const redis = createRedisAdapter({ url: 'redis://localhost:6379' })
+
+const { attach } = createServer({
+  redis,
+  schemas: [mySchema],
+})
+```
+
+:::note
+The `ioredis` and `@socket.io/redis-adapter` peer dependencies are only required when importing from `server/redis`.
+:::

@@ -13,9 +13,10 @@ import { createServer } from '@requence/socketql/server'
 const { server, namespace, liveQueryStore, attach, addSchema } = createServer({
   path: '/ws/',
   transports: ['websocket'],
-  redisUrl: 'redis://localhost:6379',
 })
 ```
+
+For multi-instance deployments with Redis, see the [Redis adapter](#redis-adapter) section below.
 
 ## Adding Schemas
 
@@ -148,3 +149,31 @@ createServer({
   },
 })
 ```
+
+## Redis Adapter
+
+For multi-instance deployments, use `createRedisAdapter` from `@requence/socketql/server/redis`. This provides both Socket.IO adapter coordination and Redis-backed live query invalidation across instances.
+
+Install the required peer dependencies:
+
+```bash
+npm add ioredis @socket.io/redis-adapter
+```
+
+```ts
+import { createServer } from '@requence/socketql/server'
+import { createRedisAdapter } from '@requence/socketql/server/redis'
+
+const redis = createRedisAdapter({ url: 'redis://localhost:6379' })
+
+const { attach } = createServer({
+  path: '/ws/',
+  redis,
+  schemas: [mySchema],
+})
+```
+
+:::tip
+These packages are only loaded when importing from `server/redis`. Without it, no Redis dependencies are needed.
+:::
+

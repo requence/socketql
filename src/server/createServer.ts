@@ -13,7 +13,7 @@ import {
 } from '@graphql-tools/utils'
 import { applyLiveQueryJSONDiffPatchGenerator } from '@n1ru4l/graphql-live-query-patch-jsondiffpatch'
 import { registerSocketIOGraphQLServer } from '@n1ru4l/socket-io-graphql-server'
-import { createAdapter as createRedisAdapter } from '@socket.io/redis-adapter'
+
 import type DataLoader from 'dataloader'
 import {
   type ExecutionArgs,
@@ -25,7 +25,7 @@ import {
   execute as graphqlExecute,
   subscribe as graphqlSubscribe,
 } from 'graphql'
-import { Redis } from 'ioredis'
+import type { RedisAdapter } from './redis.ts'
 import { Server as IoServer, type Socket } from 'socket.io'
 
 import {
@@ -33,8 +33,8 @@ import {
   liveQueryIdentifierDirectiveSDL,
   uploadInputSDL,
 } from './const.ts'
-import type { ExtendedLiveQueryStore, LiveQueryStoreOptions } from './createLiveQueryStore.ts'
-import createLiveQueryStore from './createLiveQueryStore.ts'
+import type { ExtendedLiveQueryStore } from './createLiveQueryStore.ts'
+import LiveQueryStore from './createLiveQueryStore.ts'
 import { unauthorized } from './errors.ts'
 import extendSchema from './extendSchema.ts'
 import type { GraphQLContext } from './types.ts'
@@ -68,22 +68,24 @@ export function defineSchema<Context = any>(
 ): SocketQLSchema<Context> {
   return schema
 }
-export interface ServerOptions<Context>
-  extends Pick<NonNullable<IoServerParameters[1]>, 'path' | 'transports'> {
+export interface ServerOptions<Context> extends Pick<
+  NonNullable<IoServerParameters[1]>,
+  'path' | 'transports'
+> {
   extendContext?: (
     baseContext: Pick<GraphQLContext, 'socket' | 'namespace'>,
   ) => MaybePromise<Context>
   graphqlNamespace?: string
   onConnect?: (socket: Socket) => MaybePromise<void>
   onDisconnect?: (socket: Socket, reason: string) => MaybePromise<void>
-  liveQueryStore?: LiveQueryStoreOptions
+
   formatError?: (error: GraphQLError) => GraphQLError
   maxUploadSize?: number
   transformSchema?: SchemaTransformer
   schemas?: SocketQLSchema<Context>[]
   pingInterval?: number
   pingTimeout?: number
-  redisUrl?: string
+  redis?: RedisAdapter
   wrapExecute?: <T>(
     execute: () => T,
     context: Context & Omit<GraphQLContext, 'queriedFields'>,
@@ -97,7 +99,7 @@ export function createServer<Context>({
   path = '/ws/',
   transports = ['websocket'],
   graphqlNamespace = 'graphql',
-  liveQueryStore: liveQueryStoreOptions = {},
+
   onConnect,
   onDisconnect,
   formatError,
@@ -107,14 +109,9 @@ export function createServer<Context>({
   pingTimeout = 20_000,
   wrapExecute = (execute) => execute(),
   transformSchema = (s) => s,
-  redisUrl,
+  redis,
 }: ServerOptions<Context>) {
-  let adapter
-  if (redisUrl) {
-    const pubRedis = new Redis(redisUrl)
-    const subRedis = pubRedis.duplicate()
-    adapter = createRedisAdapter(pubRedis, subRedis)
-  }
+  const adapter = redis?.adapter
 
   const ioServer = new IoServer({
     path,
@@ -143,7 +140,7 @@ export function createServer<Context>({
     })
   }
 
-  const liveQueryStore = createLiveQueryStore(liveQueryStoreOptions)
+  const liveQueryStore = redis?.liveQueryStore ?? new LiveQueryStore()
 
   const liveExecute = liveQueryStore.makeExecute(
     async ({ contextValue, ...args }) => {

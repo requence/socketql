@@ -58,23 +58,33 @@ liveQueryStore.invalidate((tools) => [
 
 ## Live Identifier Directive
 
-Use `@liveIdentifier` on arguments to automatically scope live query subscriptions:
+By default, when a `@live` query has arguments, the system creates an identifier that includes **all** arguments. This means invalidating the query requires knowing the exact argument combination each client used.
+
+This becomes a problem with filtered lists — for example, a `tasks` query with a `filter` argument. Every unique filter combination produces a different identifier, making it impractical to invalidate all active `tasks` queries when a task is created:
 
 ```graphql
+# ❌ Without @liveIdentifier, each filter combination is a separate identifier.
+# Invalidating "Query.tasks" won't reach clients using "Query.tasks(filter: ...)"
 type Query {
-  user(id: ID! @liveIdentifier): User @live
+  tasks(filter: TaskFilter): [Task!]! @live
 }
 ```
 
-## Redis-Backed Invalidation
+Use `@liveIdentifier` to explicitly select which arguments should be part of the identifier. Arguments **not** marked with `@liveIdentifier` are excluded, so the `filter` no longer splits subscribers into separate identifiers:
 
-For multi-instance deployments, pass `redisUrl` to share invalidations across servers:
+```graphql
+# ✅ Only 'projectId' scopes the identifier — filter is ignored
+type Query {
+  tasks(projectId: ID! @liveIdentifier, filter: TaskFilter): [Task!]! @live
+}
+```
+
+To invalidate all tasks for a given project, regardless of filter:
 
 ```ts
-createServer({
-  liveQueryStore: {
-    redisUrl: 'redis://localhost:6379',
-    redisChannel: 'my-app-live-queries',
-  },
-})
+liveQueryStore.invalidate((t) => t.args('Query.tasks', { projectId: 'xyz' }))
 ```
+
+## Debugging
+
+When `NODE_ENV` is not set to `production`, the server includes the generated live query identifiers in the response extensions. You can inspect them in your browser's devtools under the **Socket** (or **WS**) tab — each live query response will contain the resource identifiers it subscribed to. This is useful for verifying that your `@liveIdentifier` directives produce the expected identifiers.

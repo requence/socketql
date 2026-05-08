@@ -1,10 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 
-import {
-  InMemoryLiveQueryStore,
-  type InMemoryLiveQueryStoreParameter,
-} from '@n1ru4l/in-memory-live-query-store'
-import { Redis } from 'ioredis'
+import { InMemoryLiveQueryStore } from '@n1ru4l/in-memory-live-query-store'
 
 import buildLiveIdentifier from './buildLiveIdentifier.ts'
 
@@ -29,7 +25,7 @@ export type LiveQueryStoreIdentifier =
       tools: LiveQueryStoreIdentifierBuilderTools,
     ) => string | Falsy | (string | Falsy)[])
 
-function buildIdentifiers(rawIdentifier: LiveQueryStoreIdentifier) {
+export function buildIdentifiers(rawIdentifier: LiveQueryStoreIdentifier) {
   let identifier: string | Falsy | (string | Falsy)[]
   if (typeof rawIdentifier === 'function') {
     identifier = rawIdentifier(liveQueryStoreIdentifierBuilderTools)
@@ -56,7 +52,7 @@ export interface ExtendedLiveQueryStore extends InMemoryLiveQueryStore {
   ): () => void
 }
 
-function buildInvalidationHandler() {
+export function buildInvalidationHandler() {
   const invalidationHandler = new Map<string, Set<InvalidationHandler>>()
 
   return {
@@ -91,7 +87,7 @@ function buildInvalidationHandler() {
   }
 }
 
-class LiveQueryStore
+export default class LiveQueryStore
   extends InMemoryLiveQueryStore
   implements ExtendedLiveQueryStore
 {
@@ -128,92 +124,4 @@ class LiveQueryStore
   ) {
     return this.invalidation.subscribe(identifier, handler)
   }
-}
-
-interface RedisLiveQueryStoreParamters extends InMemoryLiveQueryStoreParameter {
-  redisUrl: string
-  channel: string
-}
-
-class RedisLiveQueryStore
-  extends InMemoryLiveQueryStore
-  implements ExtendedLiveQueryStore
-{
-  private pubRedis: Redis
-  private invalidation = buildInvalidationHandler()
-  private identifierStore = new AsyncLocalStorage<Set<string>>()
-
-  constructor(private params: RedisLiveQueryStoreParamters) {
-    super(params)
-    this.pubRedis = new Redis(params.redisUrl)
-    this.subscribe()
-  }
-
-  async beforeInvalidate(
-    before: (identifiers: string[]) => any,
-    execute: () => any,
-  ) {
-    const identifierSet = new Set<string>()
-    await this.identifierStore.run(identifierSet, execute)
-    if (identifierSet.size > 0) {
-      const identifiers = Array.from(identifierSet)
-      await before(identifiers)
-      await Promise.all(
-        identifiers.map((identifier) =>
-          this.pubRedis.publish(this.params.channel, identifier),
-        ),
-      )
-    }
-  }
-
-  private async subscribe() {
-    const subRedis = this.pubRedis.duplicate()
-    await subRedis.subscribe(this.params.channel)
-    subRedis.on('message', (channel, resourceIdentifier) => {
-      if (channel === this.params.channel && resourceIdentifier) {
-        super.invalidate(resourceIdentifier)
-        this.invalidation.trigger(resourceIdentifier)
-      }
-    })
-  }
-
-  async invalidate(identifier: LiveQueryStoreIdentifier) {
-    const identifiers = buildIdentifiers(identifier)
-    const store = this.identifierStore.getStore()
-    if (store) {
-      identifiers.forEach((identifier) => store.add(identifier))
-    } else {
-      await Promise.all(
-        identifiers.map((identifier) =>
-          this.pubRedis.publish(this.params.channel, identifier),
-        ),
-      )
-    }
-  }
-
-  onInvalidate(
-    identifier: LiveQueryStoreIdentifier,
-    handler: InvalidationHandler,
-  ) {
-    return this.invalidation.subscribe(identifier, handler)
-  }
-}
-
-export interface LiveQueryStoreOptions {
-  redisUrl?: string
-  redisChannel?: string
-}
-export default function createLiveQueryStore({
-  redisUrl,
-  redisChannel = 'requence-socketql-sync',
-}: LiveQueryStoreOptions) {
-  return redisUrl
-    ? new RedisLiveQueryStore({
-        includeIdentifierExtension: process.env.NODE_ENV !== 'production',
-        redisUrl,
-        channel: redisChannel,
-      })
-    : new LiveQueryStore({
-        includeIdentifierExtension: process.env.NODE_ENV !== 'production',
-      })
 }
