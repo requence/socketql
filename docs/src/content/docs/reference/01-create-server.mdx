@@ -49,6 +49,7 @@ function createServer<Context>(options: ServerOptions<Context>): {
 | `formatError`      | `(error) => GraphQLError`                   | —                | Transform GraphQL errors before sending        |
 | `maxUploadSize`    | `number`                                    | —                | Max upload size in bytes                       |
 | `transformSchema`  | `SchemaTransformer`                         | identity         | Transform the schema after creation            |
+| `schemas`          | `SocketQLSchema<Context>[]`                 | —                | Pre-register schemas at creation time          |
 | `pingInterval`     | `number`                                    | `25000`          | Socket.IO ping interval (ms)                   |
 | `pingTimeout`      | `number`                                    | `20000`          | Socket.IO ping timeout (ms)                    |
 | `redisUrl`         | `string`                                    | —                | Redis URL for Socket.IO adapter                |
@@ -79,6 +80,38 @@ Bun only:
 | `handler`        | `() => { fetch, websocket, idleTimeout }`  | Returns Bun-ready config to spread into `Bun.serve()` or `export default` |
 | `handleRequest`  | `(req, server) => Promise<Response>`       | Handle a single Socket.IO request directly     |
 | `withServer`     | `(fallback) => (req, server) => Response`  | Intercepts SocketQL requests, delegates the rest to the fallback |
+
+## SocketQLSchema
+
+A schema object containing type definitions and resolvers:
+
+```ts
+interface SocketQLSchema<Context = any> {
+  typeDefs: TypeSource
+  resolvers: IResolvers<any, GraphQLContext & Context>
+}
+```
+
+## defineSchema
+
+A type-safe helper for creating `SocketQLSchema` objects. It is a simple identity function that provides autocomplete and type checking:
+
+```ts
+import { defineSchema } from '@requence/socketql/server'
+
+const mySchema = defineSchema({
+  typeDefs: /* GraphQL */ `
+    type Query {
+      hello: String!
+    }
+  `,
+  resolvers: {
+    Query: {
+      hello: () => 'world',
+    },
+  },
+})
+```
 
 ## GraphQLContext
 

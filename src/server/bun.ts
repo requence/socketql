@@ -2,10 +2,13 @@ import { Server as BunEngine } from '@socket.io/bun-engine'
 
 import {
   type ServerOptions,
+  type SocketQLSchema,
   createServer as createNodeServer,
+  defineSchema,
 } from './createServer.ts'
 
-export type { ServerOptions }
+export type { ServerOptions, SocketQLSchema }
+export { defineSchema }
 export type { Socket } from './createServer.ts'
 
 export function createServer<Context>(options: ServerOptions<Context>) {

@@ -19,9 +19,41 @@ const { server, namespace, liveQueryStore, attach, addSchema } = createServer({
 
 ## Adding Schemas
 
-Use `addSchema` to register GraphQL type definitions and resolvers:
+There are two ways to register GraphQL schemas.
+
+### Via `schemas` option
+
+Pass schemas directly when creating the server using the `schemas` option. Use `defineSchema` for type-safe schema definitions:
 
 ```ts
+import { createServer, defineSchema } from '@requence/socketql/server'
+
+const helloSchema = defineSchema({
+  typeDefs: /* GraphQL */ `
+    type Query {
+      hello: String! @live
+    }
+  `,
+  resolvers: {
+    Query: {
+      hello: () => 'world',
+    },
+  },
+})
+
+const { attach } = createServer({
+  path: '/ws/',
+  schemas: [helloSchema],
+})
+```
+
+### Via `addSchema`
+
+Alternatively, use `addSchema` to register schemas dynamically after server creation:
+
+```ts
+const { addSchema, attach } = createServer({ path: '/ws/' })
+
 addSchema({
   typeDefs: /* GraphQL */ `
     type Query {
@@ -35,6 +67,10 @@ addSchema({
   },
 })
 ```
+
+:::tip
+Both methods can be combined — `schemas` are applied first, then any `addSchema` calls are appended.
+:::
 
 ## Attaching to a Server
 
@@ -53,11 +89,14 @@ httpServer.listen(4000)
 Import from `@requence/socketql/server/bun` instead — it replaces `attach` with a `handler()` method:
 
 ```ts
-import { createServer } from '@requence/socketql/server/bun'
+import { createServer, defineSchema } from '@requence/socketql/server/bun'
 
-const { addSchema, handler } = createServer({ path: '/ws/' })
+const mySchema = defineSchema({ typeDefs, resolvers })
 
-addSchema({ typeDefs, resolvers })
+const { handler } = createServer({
+  path: '/ws/',
+  schemas: [mySchema],
+})
 
 export default { port: 4000, ...handler() }
 ```
@@ -67,12 +106,15 @@ Use `withServer` to intercept SocketQL requests and fall through to your app:
 
 ```ts
 import { Hono } from 'hono'
-import { createServer } from '@requence/socketql/server/bun'
+import { createServer, defineSchema } from '@requence/socketql/server/bun'
 
 const app = new Hono()
-const { addSchema, withServer, handler } = createServer({ path: '/ws/' })
+const mySchema = defineSchema({ typeDefs, resolvers })
 
-addSchema({ typeDefs, resolvers })
+const { withServer, handler } = createServer({
+  path: '/ws/',
+  schemas: [mySchema],
+})
 
 export default {
   port: 4000,

@@ -21,16 +21,17 @@ npm install @requence/socketql
 ### Server
 
 ```ts
-import { createServer } from '@requence/socketql/server'
+import { createServer, defineSchema } from '@requence/socketql/server'
 
-const { server, addSchema, attach } = createServer({
-  path: '/ws/',
-  transports: ['websocket'],
-})
-
-addSchema({
+const mySchema = defineSchema({
   typeDefs: /* your schema */,
   resolvers: /* your resolvers */,
+})
+
+const { attach } = createServer({
+  path: '/ws/',
+  transports: ['websocket'],
+  schemas: [mySchema],
 })
 
 attach(httpServer)

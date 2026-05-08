@@ -57,6 +57,17 @@ export type SchemaTransformer = (
   schema: GraphQLSchema,
   tools: SchemaTransformerTools,
 ) => GraphQLSchema
+
+export interface SocketQLSchema<Context = any> {
+  typeDefs: TypeSource
+  resolvers: IResolvers<any, GraphQLContext & Context>
+}
+
+export function defineSchema<Context = any>(
+  schema: SocketQLSchema<Context>,
+): SocketQLSchema<Context> {
+  return schema
+}
 export interface ServerOptions<Context>
   extends Pick<NonNullable<IoServerParameters[1]>, 'path' | 'transports'> {
   extendContext?: (
@@ -69,6 +80,7 @@ export interface ServerOptions<Context>
   formatError?: (error: GraphQLError) => GraphQLError
   maxUploadSize?: number
   transformSchema?: SchemaTransformer
+  schemas?: SocketQLSchema<Context>[]
   pingInterval?: number
   pingTimeout?: number
   redisUrl?: string
@@ -90,6 +102,7 @@ export function createServer<Context>({
   onDisconnect,
   formatError,
   maxUploadSize,
+  schemas: initialSchemas,
   pingInterval = 25_000,
   pingTimeout = 20_000,
   wrapExecute = (execute) => execute(),
@@ -174,6 +187,13 @@ export function createServer<Context>({
 
   const typeDefs: TypeSource[] = []
   const resolvers: IResolvers[] = []
+
+  if (initialSchemas) {
+    for (const schema of initialSchemas) {
+      typeDefs.push(schema.typeDefs)
+      resolvers.push(schema.resolvers)
+    }
+  }
   const execute = async (args: ExecutionArgs) =>
     applyLiveQueryJSONDiffPatchGenerator(liveExecute(args))
 

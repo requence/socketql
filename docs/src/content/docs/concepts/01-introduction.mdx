@@ -32,25 +32,28 @@ The library ships four entry points:
 
 ```ts
 // Server (Node.js)
-import { createServer } from '@requence/socketql/server'
+import { createServer, defineSchema } from '@requence/socketql/server'
 
-const { addSchema, attach } = createServer({
+const mySchema = defineSchema({ typeDefs, resolvers })
+
+const { attach } = createServer({
   path: '/ws/',
+  schemas: [mySchema],
 })
 
-addSchema({ typeDefs, resolvers })
 attach(httpServer)
 ```
 
 ```ts
 // Server (Bun)
-import { createServer } from '@requence/socketql/server/bun'
+import { createServer, defineSchema } from '@requence/socketql/server/bun'
 
-const { addSchema, handler } = createServer({
+const mySchema = defineSchema({ typeDefs, resolvers })
+
+const { handler } = createServer({
   path: '/ws/',
+  schemas: [mySchema],
 })
-
-addSchema({ typeDefs, resolvers })
 
 export default { port: 4000, ...handler() }
 ```
