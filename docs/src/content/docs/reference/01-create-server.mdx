@@ -16,6 +16,7 @@ function createServer<Context>(options: ServerOptions<Context>): {
   liveQueryStore: ExtendedLiveQueryStore
   attach: (baseServer: ServerInstance) => void
   addSchema: (opts: { typeDefs: TypeSource; resolvers: IResolvers }) => void
+  httpHandler: (opts?) => (c) => Promise<Response>
   generateIntrospection: () => Promise<IntrospectionQuery>
 }
 ```
@@ -31,6 +32,7 @@ function createServer<Context>(options: ServerOptions<Context>): {
   liveQueryStore: ExtendedLiveQueryStore
   handler: () => { fetch, websocket, idleTimeout }
   addSchema: (opts: { typeDefs: TypeSource; resolvers: IResolvers }) => void
+  httpHandler: (opts?) => (c) => Promise<Response>
   generateIntrospection: () => Promise<IntrospectionQuery>
 }
 ```
@@ -64,6 +66,7 @@ Shared across both entry points:
 | `namespace`             | `Namespace`                 | The GraphQL namespace                            |
 | `liveQueryStore`        | `ExtendedLiveQueryStore`    | Live query store for invalidation                |
 | `addSchema`             | `(opts) => void`            | Register type definitions and resolvers          |
+| `httpHandler`           | `(opts?) => (c) => Promise<Response>` | HTTP GraphQL endpoint handler          |
 | `generateIntrospection` | `() => Promise<...>`        | Generate introspection result                    |
 
 Node.js only:
@@ -114,16 +117,71 @@ const mySchema = defineSchema({
 
 ## GraphQLContext
 
-Every resolver receives a context with these properties:
+The context is a discriminated union on the `transport` field. Every resolver receives one of two context shapes depending on how the request arrived.
+
+### Shared properties
+
+Available in both WebSocket and HTTP contexts:
 
 | Property         | Type                    | Description                                   |
 | ---------------- | ----------------------- | --------------------------------------------- |
-| `namespace`      | `Namespace`             | The Socket.IO namespace                       |
-| `socket`         | `Socket`                | The current client's socket                   |
+| `transport`      | `'websocket' \| 'http'` | The transport used for the request             |
 | `queriedFields`  | `QueriedFields`         | Parsed field selection helpers                |
 | `unauthorized`   | `(msg) => never`        | Throw an unauthorized GraphQL error           |
 | `loader`         | `(load, name?) => DataLoader` | Get or create a batched DataLoader       |
 | `liveQueryStore` | `ExtendedLiveQueryStore`| Live query invalidation                       |
+
+### `WebSocketGraphQLContext`
+
+When `transport` is `'websocket'`, the context additionally includes:
+
+| Property    | Type        | Description                       |
+| ----------- | ----------- | --------------------------------- |
+| `namespace` | `Namespace` | The Socket.IO namespace           |
+| `socket`    | `Socket`    | The current client's socket       |
+
+### `HttpGraphQLContext`
+
+When `transport` is `'http'`, `socket` and `namespace` are **not** part of the context.
+
+### Type narrowing
+
+```ts
+if (context.transport === 'websocket') {
+  context.socket    // ✅ Socket
+  context.namespace // ✅ Namespace
+}
+
+if (context.transport === 'http') {
+  // socket and namespace do not exist on this type
+}
+```
+
+All three types are exported:
+
+```ts
+import type {
+  GraphQLContext,
+  WebSocketGraphQLContext,
+  HttpGraphQLContext,
+} from '@requence/socketql/server'
+```
+
+## httpHandler
+
+Returns an HTTP-compatible handler for GraphQL queries and mutations.
+
+```ts
+httpHandler(opts?: {
+  extendContext?: (req: Request) => MaybePromise<Context>
+  mapSchema?: (schema: GraphQLSchema) => GraphQLSchema
+})
+```
+
+| Option          | Type                                     | Description                                          |
+| --------------- | ---------------------------------------- | ---------------------------------------------------- |
+| `extendContext` | `(req: Request) => Context`              | Extend context per HTTP request (e.g. auth from headers) |
+| `mapSchema`     | `(schema: GraphQLSchema) => GraphQLSchema` | Transform the schema for HTTP (cached after first call) |
 
 ## createRedisAdapter
 

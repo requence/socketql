@@ -18,6 +18,7 @@ export function createServer<Context>(options: ServerOptions<Context>) {
     liveQueryStore,
     addSchema,
     generateIntrospection,
+    httpHandler,
   } = createNodeServer(options)
 
   const path = options.path ?? '/ws/'
@@ -30,6 +31,7 @@ export function createServer<Context>(options: ServerOptions<Context>) {
     liveQueryStore,
     addSchema,
     generateIntrospection,
+    httpHandler,
     handleRequest: (req: Request, bunServer: any) =>
       engine.handleRequest(req, bunServer),
     withServer:
@@ -43,3 +45,4 @@ export function createServer<Context>(options: ServerOptions<Context>) {
     handler: () => engine.handler(),
   }
 }
+

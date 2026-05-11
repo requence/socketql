@@ -37,7 +37,7 @@ import type { ExtendedLiveQueryStore } from './createLiveQueryStore.ts'
 import LiveQueryStore from './createLiveQueryStore.ts'
 import { unauthorized } from './errors.ts'
 import extendSchema from './extendSchema.ts'
-import type { GraphQLContext } from './types.ts'
+import type { GraphQLContext, WebSocketGraphQLContext } from './types.ts'
 
 export { Socket }
 
@@ -73,7 +73,7 @@ export interface ServerOptions<Context> extends Pick<
   'path' | 'transports'
 > {
   extendContext?: (
-    baseContext: Pick<GraphQLContext, 'socket' | 'namespace'>,
+    baseContext: Pick<WebSocketGraphQLContext, 'socket' | 'namespace'>,
   ) => MaybePromise<Context>
   graphqlNamespace?: string
   onConnect?: (socket: Socket) => MaybePromise<void>
@@ -259,6 +259,7 @@ export function createServer<Context>({
       graphQLExecutionParameter: {
         schema: getSchema(),
         contextValue: {
+          transport: 'websocket' as const,
           namespace,
           socket,
           liveQueryStore,
@@ -281,6 +282,40 @@ export function createServer<Context>({
     }) => {
       typeDefs.push(opts.typeDefs)
       resolvers.push(opts.resolvers)
+    },
+    httpHandler: (opts?: {
+      extendContext?: (req: Request) => MaybePromise<Context>
+      mapSchema?: (schema: GraphQLSchema) => GraphQLSchema
+    }) => {
+      let httpSchema: GraphQLSchema | undefined
+
+      return async (c: {
+        req: { json(): Promise<any>; raw: Request }
+      }): Promise<Response> => {
+        if (!httpSchema) {
+          httpSchema = opts?.mapSchema
+            ? opts.mapSchema(getSchema())
+            : getSchema()
+        }
+
+        const { query, variables, operationName } = await c.req.json()
+
+        const result = await graphql({
+          schema: httpSchema,
+          source: query,
+          variableValues: variables,
+          operationName,
+          contextValue: {
+            transport: 'http' as const,
+            unauthorized,
+            liveQueryStore,
+            dataLoaders: new Map<string, DataLoader<any, any>>(),
+            ...(await opts?.extendContext?.(c.req.raw)),
+          },
+        })
+
+        return Response.json(result)
+      }
     },
     async generateIntrospection() {
       const result = await graphql({

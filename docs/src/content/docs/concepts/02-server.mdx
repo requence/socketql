@@ -103,7 +103,7 @@ export default { port: 4000, ...handler() }
 ```
 
 :::tip[Using with Hono or other frameworks]
-Use `withServer` to intercept SocketQL requests and fall through to your app:
+Use `withServer` to intercept SocketQL WebSocket requests and fall through to your app:
 
 ```ts
 import { Hono } from 'hono'
@@ -112,10 +112,13 @@ import { createServer, defineSchema } from '@requence/socketql/server/bun'
 const app = new Hono()
 const mySchema = defineSchema({ typeDefs, resolvers })
 
-const { withServer, handler } = createServer({
+const { withServer, handler, httpHandler } = createServer({
   path: '/ws/',
   schemas: [mySchema],
 })
+
+// Add an HTTP GraphQL endpoint alongside the WebSocket server
+app.post('/graphql', httpHandler())
 
 export default {
   port: 4000,
@@ -125,9 +128,105 @@ export default {
 ```
 :::
 
-## Context Extension
+## HTTP Handler
 
-Extend the GraphQL context per connection:
+By default, SocketQL serves GraphQL exclusively over WebSocket. Use `httpHandler()` to expose a standard HTTP `POST /graphql` endpoint for queries and mutations.
+
+:::note
+Live queries (`@live`) and subscriptions are **not supported** over HTTP — they require the persistent WebSocket connection. The HTTP endpoint is for standard queries and mutations only.
+:::
+
+### Basic usage
+
+```ts
+const { httpHandler } = createServer({ path: '/ws/', schemas: [mySchema] })
+
+app.post('/graphql', httpHandler())
+```
+
+The handler is compatible with any framework that uses a Hono-style context object (`c.req.json()`, `c.req.raw`).
+
+### Context extension
+
+Extend the GraphQL context per HTTP request using `extendContext`. This receives the raw `Request` object, so you can extract auth tokens, cookies, or other headers:
+
+```ts
+app.post('/graphql', httpHandler({
+  extendContext: async (req) => {
+    const token = req.headers.get('authorization')?.replace('Bearer ', '')
+    const session = await verifySession(token)
+    return { userId: session.userId }
+  },
+}))
+```
+
+### Schema filtering with `mapSchema`
+
+By default, the HTTP endpoint uses the same schema as the WebSocket server. Use `mapSchema` to transform or filter the schema for HTTP — for example, to expose only a subset of queries and mutations.
+
+```ts
+app.post('/graphql', httpHandler({
+  mapSchema: (schema) => {
+    // Return a transformed schema — only @http-marked fields will be accessible
+    return myFilteredSchema(schema)
+  },
+}))
+```
+
+The `mapSchema` callback receives the full compiled `GraphQLSchema` and must return a `GraphQLSchema`. The result is cached after the first request.
+
+#### Example: `@http` directive
+
+A common pattern is to mark specific fields with a custom `@http` directive and filter the schema to only expose those over HTTP.
+
+Define the directive in your schema:
+
+```graphql
+directive @http on FIELD_DEFINITION
+
+type Query {
+  publicStatus: Status! @http
+  users: [User!]! @live
+  dashboard: Dashboard! @live
+}
+
+type Mutation {
+  webhookCallback(input: WebhookInput!): Boolean! @http
+  updateUser(input: UpdateUserInput!): User!
+}
+```
+
+Then filter the schema using `mapSchema` with `@graphql-tools/utils`:
+
+```ts
+import { MapperKind, getDirective, mapSchema } from '@graphql-tools/utils'
+
+app.post('/graphql', httpHandler({
+  mapSchema: (schema) =>
+    mapSchema(schema, {
+      [MapperKind.QUERY_ROOT_FIELD]: (fieldConfig) => {
+        return getDirective(schema, fieldConfig, 'http')?.length
+          ? fieldConfig
+          : null
+      },
+      [MapperKind.MUTATION_ROOT_FIELD]: (fieldConfig) => {
+        return getDirective(schema, fieldConfig, 'http')?.length
+          ? fieldConfig
+          : null
+      },
+    }),
+}))
+```
+
+In this setup, only `publicStatus` and `webhookCallback` are accessible over HTTP. All other fields are stripped from the HTTP schema and won't appear in introspection.
+
+## Context
+
+The GraphQL context is a discriminated union based on the `transport` field. This means resolvers can narrow the context type to access transport-specific properties.
+
+### WebSocket context
+
+When a query arrives over WebSocket, the context includes the Socket.IO `socket` and `namespace`:
 
 ```ts
 createServer({
@@ -135,6 +234,51 @@ createServer({
     userId: socket.handshake.auth.userId,
   }),
 })
+```
+
+### HTTP context
+
+When a query arrives over HTTP (via `httpHandler`), the context does **not** include `socket` or `namespace`. Use the `extendContext` option on `httpHandler` to add per-request context:
+
+```ts
+app.post('/graphql', httpHandler({
+  extendContext: async (req) => ({
+    userId: await getUserFromHeaders(req),
+  }),
+}))
+```
+
+### Transport narrowing
+
+Use `context.transport` to differentiate between transports in your resolvers:
+
+```ts
+const resolvers = {
+  Query: {
+    me: (_, __, context) => {
+      if (context.transport === 'websocket') {
+        // context.socket and context.namespace are available
+        console.log('WebSocket client:', context.socket.id)
+      }
+
+      if (context.transport === 'http') {
+        // context.socket and context.namespace do not exist
+      }
+
+      return getUser(context.userId)
+    },
+  },
+}
+```
+
+The exported types `WebSocketGraphQLContext` and `HttpGraphQLContext` can be used directly for type-safe resolver signatures:
+
+```ts
+import type {
+  GraphQLContext,
+  WebSocketGraphQLContext,
+  HttpGraphQLContext,
+} from '@requence/socketql/server'
 ```
 
 ## Lifecycle Hooks

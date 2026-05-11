@@ -7,9 +7,7 @@ import type { ExtendedLiveQueryStore } from './createLiveQueryStore.ts'
 import type { unauthorized } from './errors.ts'
 import type { QueriedFields } from './getQueriedFields.ts'
 
-export type GraphQLContext = {
-  namespace: Namespace
-  socket: Socket
+type BaseGraphQLContext = {
   queriedFields: QueriedFields
   unauthorized: typeof unauthorized
   loader: <V, K = string>(
@@ -31,3 +29,15 @@ export type GraphQLContext = {
     addResourceIdentifier: (identifer: string | string[]) => void
   }
 }
+
+export type WebSocketGraphQLContext = BaseGraphQLContext & {
+  transport: 'websocket'
+  namespace: Namespace
+  socket: Socket
+}
+
+export type HttpGraphQLContext = BaseGraphQLContext & {
+  transport: 'http'
+}
+
+export type GraphQLContext = WebSocketGraphQLContext | HttpGraphQLContext
