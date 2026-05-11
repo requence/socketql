@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.3.0
+
+### Minor Changes
+
+- [`7b84c4a`](https://github.com/requence/socketql/commit/7b84c4ac913cdc0ea8062f0d3e437217986d8e2a) Thanks [@Torsten85](https://github.com/Torsten85)! - added http endpoint
+
 ## 1.2.1
 
 ### Patch Changes

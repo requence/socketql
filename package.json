@@ -1,6 +1,6 @@
 {
   "name": "@requence/socketql",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Socket.IO-based GraphQL transport with live queries, URQL client, and React hooks",
   "type": "module",
   "sideEffects": false,
