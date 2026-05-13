@@ -13,8 +13,9 @@ import cacheExchange from './exchanges/cacheExchange.ts'
 import emitExchange from './exchanges/emitExchange.ts'
 import holdSubscriptionExchange from './exchanges/holdSubscriptionExchange.ts'
 
-interface ClientOptions
-  extends Partial<Pick<ManagerOptions, 'path' | 'transports'>> {
+interface ClientOptions extends Partial<
+  Pick<ManagerOptions, 'path' | 'transports'>
+> {
   graphqlNamespace?: string
   onConnect?: () => Record<string, any>
 }
@@ -92,7 +93,12 @@ export function createClient({
                   variables: mapVariables(operation.variables),
                 }),
               ),
-              sink,
+              // structuredClone ensures patched results are new references,
+              // required because @n1ru4l/json-patch-plus mutates in place
+              {
+                ...sink,
+                next: (value: any) => sink.next(structuredClone(value)),
+              },
             ),
           }),
         }),
