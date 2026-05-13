@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.3.1
+
+### Patch Changes
+
+- [`c6f5257`](https://github.com/requence/socketql/commit/c6f5257557850fd48e7586cee4d405573a8c877e) Thanks [@Torsten85](https://github.com/Torsten85)! - ensure query results are not mutated
+
 ## 1.3.0
 
 ### Minor Changes
