@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.3.2
+
+### Patch Changes
+
+- [`7ae6c20`](https://github.com/requence/socketql/commit/7ae6c20a322d221a10ef1004ef1e8fb2abc4b321) Thanks [@Torsten85](https://github.com/Torsten85)! - resolved context typing issue, added "withCredentials" pass through
+
 ## 1.3.1
 
 ### Patch Changes
