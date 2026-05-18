@@ -3,9 +3,12 @@ import { GraphQLError } from 'graphql'
 export class UnauthorizedError extends Error {}
 
 export class ConnectionRejectedError extends Error {
-  constructor(message = 'Connection rejected') {
+  data?: Record<string, any>
+
+  constructor(message = 'Connection rejected', data?: Record<string, any>) {
     super(message)
     this.name = 'ConnectionRejectedError'
+    this.data = data
   }
 }
 

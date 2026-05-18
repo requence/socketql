@@ -45,7 +45,7 @@ function createServer<Context>(options: ServerOptions<Context>): {
 | `transports`       | `string[]`                                  | `['websocket']`  | Allowed transports                             |
 | `graphqlNamespace`  | `string`                                   | `'graphql'`      | Socket.IO namespace for GraphQL                |
 | `extendContext`    | `(ctx) => Context`                          | `() => ({})`     | Extend GraphQL context per connection          |
-| `onConnect`        | `(socket) => void`                          | —                | Called when a client connects. Throw `ConnectionRejectedError` to reject. |
+| `onConnect`        | `(socket) => void`                          | —                | Called when a client connects. Throw `ConnectionRejectedError(message, data?)` to reject. |
 | `onDisconnect`     | `(socket, reason) => void`                  | —                | Called when a client disconnects               |
 | `formatError`      | `(error) => GraphQLError`                   | —                | Transform GraphQL errors before sending        |
 | `maxUploadSize`    | `number`                                    | —                | Max upload size in bytes                       |

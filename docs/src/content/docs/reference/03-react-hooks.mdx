@@ -3,7 +3,47 @@ title: React Hooks
 description: API reference for the React hooks.
 ---
 
-All hooks are exported from `@requence/socketql/client/react`.
+All exports are available from `@requence/socketql/client/react`.
+
+## SocketQLProvider
+
+Wraps URQL's `Provider` and manages the WebSocket connection lifecycle. Calls `connect()` on mount and throws connection errors to the nearest React error boundary.
+
+```tsx
+import { SocketQLProvider } from '@requence/socketql/client/react'
+
+<SocketQLProvider client={client}>
+  <App />
+</SocketQLProvider>
+```
+
+### Props
+
+| Prop     | Type             | Description                                 |
+| -------- | ---------------- | ------------------------------------------- |
+| `client` | `SocketQLClient` | The client returned by `createClient`       |
+
+### Error Boundary Integration
+
+When the server rejects the connection, the provider throws the `ConnectionError` during render. Wrap it in an error boundary to handle rejections:
+
+```tsx
+<ErrorBoundary fallback={<LoginPage />}>
+  <SocketQLProvider client={client}>
+    <App />
+  </SocketQLProvider>
+</ErrorBoundary>
+```
+
+The same client can be reused after the error boundary resets — the provider will re-register its error listener and call `connect()` again.
+
+### SocketQLClient
+
+```ts
+import type { SocketQLClient } from '@requence/socketql/client/react'
+```
+
+---
 
 ## useQuery
 

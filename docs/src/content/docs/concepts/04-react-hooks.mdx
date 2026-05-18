@@ -3,7 +3,30 @@ title: React Hooks
 description: Using SocketQL React hooks for queries and mutations.
 ---
 
-The `@requence/socketql/client/react` module provides Suspense-ready hooks built on top of URQL.
+The `@requence/socketql/client/react` module provides the `SocketQLProvider` and Suspense-ready hooks built on top of URQL.
+
+## Setup
+
+Wrap your app with `SocketQLProvider` to connect and provide the client to all hooks:
+
+```tsx
+import { createClient } from '@requence/socketql/client'
+import { SocketQLProvider } from '@requence/socketql/client/react'
+
+const client = createClient({
+  auth: () => ({ token: getAccessToken() }),
+})
+
+function App() {
+  return (
+    <ErrorBoundary fallback={<LoginPage />}>
+      <SocketQLProvider client={client}>
+        <Main />
+      </SocketQLProvider>
+    </ErrorBoundary>
+  )
+}
+```
 
 ## useQuery
 

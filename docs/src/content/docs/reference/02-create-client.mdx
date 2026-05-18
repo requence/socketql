@@ -3,48 +3,63 @@ title: createClient
 description: API reference for the createClient function.
 ---
 
-Creates a Socket.IO-backed URQL client with custom exchanges.
+Creates a Socket.IO-backed URQL client with custom exchanges. The connection is **not started automatically** — use the `SocketQLProvider` or call `connect()` manually.
 
 ## Signature
 
 ```ts
-function createClient(options: ClientOptions): {
-  client: UrqlClient
-  manager: SocketManager
-  invalidate: (target: string | DocumentNode | Array) => void
-}
+function createClient(options?: ClientOptions): SocketQLClient
 ```
+
+The returned `SocketQLClient` extends URQL's `Client` with additional methods.
 
 ## Options
 
-| Option             | Type          | Default         | Description                                           |
-| ------------------ | ------------- | --------------- | ----------------------------------------------------- |
-| `path`             | `string`      | `'/ws/'`        | Socket.IO server path                                 |
-| `transports`       | `string[]`    | `['websocket']` | Allowed transports                                    |
-| `graphqlNamespace` | `string`      | `'graphql'`     | Socket.IO namespace to connect to                     |
-| `withCredentials`  | `boolean`     | —               | Send cookies with cross-origin requests               |
-| `autoConnect`      | `boolean`     | `true`          | Connect automatically on creation. Set to `false` to defer connection until `manager.open()` is called. |
-| `onConnect`        | `() => object`| —               | Return auth data for the connection                   |
+| Option             | Type                                  | Default         | Description                                           |
+| ------------------ | ------------------------------------- | --------------- | ----------------------------------------------------- |
+| `path`             | `string`                              | `'/ws/'`        | Socket.IO server path                                 |
+| `transports`       | `string[]`                            | `['websocket']` | Allowed transports                                    |
+| `graphqlNamespace` | `string`                              | `'graphql'`     | Socket.IO namespace to connect to                     |
+| `withCredentials`  | `boolean`                             | —               | Send cookies with cross-origin requests               |
+| `autoConnect`      | `boolean`                             | `false`         | Connect automatically on creation                     |
+| `auth`             | `() => Record<string, any>`           | —               | Return auth data for the connection                   |
+| `onConnect`        | `() => void`                          | —               | Called on successful connection                       |
+| `onConnectError`   | `(error: ConnectionError) => void`    | —               | Called when the connection is rejected                |
 
-## Return Values
+## Client Methods
 
-| Property     | Type             | Description                                   |
-| ------------ | ---------------- | --------------------------------------------- |
-| `client`     | `UrqlClient`     | Configured URQL client with Suspense enabled  |
-| `manager`    | `SocketManager`  | The underlying Socket.IO manager              |
-| `invalidate` | `Function`       | Manually invalidate cached operation results  |
+| Method           | Signature                                                        | Description                                          |
+| ---------------- | ---------------------------------------------------------------- | ---------------------------------------------------- |
+| `connect`        | `() => void`                                                     | Initiate the WebSocket connection                    |
+| `invalidate`     | `(target: string \| DocumentNode \| Array) => void`              | Manually invalidate cached operation results         |
+| `onConnect`      | `(cb: () => void) => () => void`                                 | Subscribe to successful connections. Returns unsubscribe. |
+| `onConnectError` | `(cb: (error: ConnectionError) => void) => () => void`           | Subscribe to connection errors. Returns unsubscribe. |
+
+:::note
+The `onConnect` and `onConnectError` options are convenience shorthands that register listeners at creation time. The client methods allow subscribing and unsubscribing dynamically at any point.
+:::
+
+## ConnectionError
+
+```ts
+interface ConnectionError extends Error {
+  data?: Record<string, any>
+}
+```
+
+The `data` property contains any structured context attached by the server via `ConnectionRejectedError`'s second argument.
 
 ## invalidate
 
 ```ts
 // Single query by operation name
-invalidate('Users')
+client.invalidate('Users')
 
 // Single query by document node
-invalidate(UsersDocument)
+client.invalidate(UsersDocument)
 
 // Multiple queries
-invalidate(['Users', ProjectsDocument])
+client.invalidate(['Users', ProjectsDocument])
 ```
 
 ## waitForResult

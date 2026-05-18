@@ -7,32 +7,65 @@ The client module creates a Socket.IO-backed URQL client with custom exchanges f
 
 ## createClient
 
+`createClient` returns an extended URQL `Client` with additional SocketQL methods. The connection is **not started automatically** — use the `SocketQLProvider` or call `connect()` manually.
+
 ```ts
 import { createClient } from '@requence/socketql/client'
 
-const { client, manager, invalidate } = createClient({
-  path: '/ws/',
-  transports: ['websocket'],
+const client = createClient({
+  auth: () => ({ token: getAccessToken() }),
 })
 ```
 
-### Return Values
+### Client Methods
 
-| Property     | Description                                           |
-| ------------ | ----------------------------------------------------- |
-| `client`     | A configured URQL `Client` instance                   |
-| `manager`    | The underlying Socket.IO `Manager`                    |
-| `invalidate` | Function to manually invalidate cached queries        |
+The returned client is a standard URQL `Client` extended with:
+
+| Method           | Signature                                    | Description                                          |
+| ---------------- | -------------------------------------------- | ---------------------------------------------------- |
+| `connect`        | `() => void`                                 | Initiate the WebSocket connection                    |
+| `invalidate`     | `(target) => void`                           | Manually invalidate cached queries                   |
+| `onConnect`      | `(cb: () => void) => () => void`             | Subscribe to successful connections. Returns unsubscribe. |
+| `onConnectError` | `(cb: (error: ConnectionError) => void) => () => void` | Subscribe to connection errors. Returns unsubscribe. |
+
+## SocketQLProvider
+
+The `SocketQLProvider` wraps URQL's `Provider` and manages the connection lifecycle. It calls `connect()` on mount and propagates connection errors to the nearest React error boundary.
+
+```tsx
+import { createClient } from '@requence/socketql/client'
+import { SocketQLProvider } from '@requence/socketql/client/react'
+
+const client = createClient({
+  auth: () => ({ token: getAccessToken() }),
+})
+
+function App() {
+  return (
+    <ErrorBoundary fallback={<LoginPage />}>
+      <SocketQLProvider client={client}>
+        <Main />
+      </SocketQLProvider>
+    </ErrorBoundary>
+  )
+}
+```
+
+When the server rejects the connection (via `ConnectionRejectedError`), the error is thrown during render and caught by the error boundary. The same client instance can be reused after the error boundary resets — the provider will call `connect()` again on re-mount.
+
+:::tip
+The `SocketQLProvider` registers its error listener *before* calling `connect()`, so there is no race condition between the connection attempt and the error handler.
+:::
 
 ## Authentication
 
 ### Via auth data
 
-Pass auth data on connect:
+Provide auth data using the `auth` option. This function is called on every connection attempt, including reconnects:
 
 ```ts
-createClient({
-  onConnect: () => ({
+const client = createClient({
+  auth: () => ({
     token: getAccessToken(),
   }),
 })
@@ -40,20 +73,45 @@ createClient({
 
 ### Via cookies
 
-When using `httpOnly` cookies for authentication, set `autoConnect: false` to prevent the client from connecting before the user has logged in. Call `manager.open()` explicitly once the session is established:
+When using `httpOnly` cookies, no `auth` option is needed. The `SocketQLProvider` handles the connection lifecycle automatically. If the login page is part of the same SPA, only mount the provider after the user has authenticated.
+
+## Connection Error Handling
+
+### ConnectionError
+
+When the server rejects a connection, the error includes an optional `data` property for structured context:
 
 ```ts
-const { client, manager } = createClient({
-  autoConnect: false,
-})
-
-// After login, open the connection
-manager.open()
+interface ConnectionError extends Error {
+  data?: Record<string, any>
+}
 ```
 
-:::tip
-This pattern is useful when the login page is part of the same SPA. Without `autoConnect: false`, the client would attempt a WebSocket connection immediately on page load — before the user has authenticated — resulting in a rejected connection.
-:::
+### Via options
+
+Register a handler at creation time:
+
+```ts
+const client = createClient({
+  onConnectError: (err) => {
+    console.log(err.message) // "Subscription expired"
+    console.log(err.data)    // { code: 'EXPIRED' }
+  },
+})
+```
+
+### Via client method
+
+Subscribe and unsubscribe dynamically:
+
+```ts
+const unsubscribe = client.onConnectError((err) => {
+  console.log(err.message, err.data)
+})
+
+// Later
+unsubscribe()
+```
 
 ## Cache Invalidation
 
@@ -63,13 +121,13 @@ Manually invalidate queries by operation name or document:
 import { MyQueryDocument } from './generated'
 
 // By operation name
-invalidate('MyQuery')
+client.invalidate('MyQuery')
 
 // By document node
-invalidate(MyQueryDocument)
+client.invalidate(MyQueryDocument)
 
 // Multiple at once
-invalidate(['QueryA', 'QueryB'])
+client.invalidate(['QueryA', 'QueryB'])
 ```
 
 ## Built-in Exchanges

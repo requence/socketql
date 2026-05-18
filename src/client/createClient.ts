@@ -13,11 +13,17 @@ import cacheExchange from './exchanges/cacheExchange.ts'
 import emitExchange from './exchanges/emitExchange.ts'
 import holdSubscriptionExchange from './exchanges/holdSubscriptionExchange.ts'
 
+export interface ConnectionError extends Error {
+  data?: Record<string, any>
+}
+
 interface ClientOptions extends Partial<
   Pick<ManagerOptions, 'path' | 'transports' | 'withCredentials' | 'autoConnect'>
 > {
   graphqlNamespace?: string
-  onConnect?: () => Record<string, any>
+  auth?: () => Record<string, any>
+  onConnect?: () => void
+  onConnectError?: (error: ConnectionError) => void
 }
 
 export function createClient({
@@ -25,8 +31,10 @@ export function createClient({
   transports = ['websocket'],
   graphqlNamespace = 'graphql',
   withCredentials,
-  autoConnect,
-  onConnect,
+  autoConnect = false,
+  auth,
+  onConnect: initialOnConnect,
+  onConnectError: initialOnConnectError,
 }: ClientOptions = {}) {
   const manager = new SocketManager({
     path,
@@ -37,9 +45,32 @@ export function createClient({
 
   const graphQLSocket = manager.socket(`/${graphqlNamespace}`, {
     auth(cb) {
-      const data = onConnect?.() ?? {}
+      const data = auth?.() ?? {}
       cb(data)
     },
+  })
+
+  const errorListeners = new Set<(error: ConnectionError) => void>()
+  const connectListeners = new Set<() => void>()
+
+  if (initialOnConnect) {
+    connectListeners.add(initialOnConnect)
+  }
+
+  if (initialOnConnectError) {
+    errorListeners.add(initialOnConnectError)
+  }
+
+  graphQLSocket.on('connect_error', (err) => {
+    for (const listener of errorListeners) {
+      listener(err)
+    }
+  })
+
+  graphQLSocket.on('connect', () => {
+    for (const listener of connectListeners) {
+      listener()
+    }
   })
 
   const ioGraphQLClient = createSocketIOGraphQLClient(graphQLSocket)
@@ -110,9 +141,20 @@ export function createClient({
     ],
   })
 
-  return {
-    client,
-    manager,
+  return Object.assign(client, {
     invalidate: cache.invalidate,
-  }
+    connect: () => graphQLSocket.connect(),
+    onConnect: (cb: () => void) => {
+      connectListeners.add(cb)
+      return () => {
+        connectListeners.delete(cb)
+      }
+    },
+    onConnectError: (cb: (error: ConnectionError) => void) => {
+      errorListeners.add(cb)
+      return () => {
+        errorListeners.delete(cb)
+      }
+    },
+  })
 }

@@ -305,6 +305,24 @@ createServer({
 })
 ```
 
+`ConnectionRejectedError` accepts an optional `data` object as the second argument. This is sent to the client alongside the error message, allowing you to pass structured context:
+
+```ts
+throw new ConnectionRejectedError('Subscription expired', {
+  code: 'SUBSCRIPTION_EXPIRED',
+  retryable: false,
+})
+```
+
+On the client, the error is received as a `ConnectionError` with a `data` property:
+
+```ts
+client.onConnectError((err) => {
+  err.message // "Subscription expired"
+  err.data    // { code: "SUBSCRIPTION_EXPIRED", retryable: false }
+})
+```
+
 :::caution
 Only `ConnectionRejectedError` is treated as an intentional rejection. Any other thrown error is considered a bug — it will be logged to `stderr` with `[socketql] unexpected onConnect error:` and the client receives a generic `"Internal server error"` message.
 :::
