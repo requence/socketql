@@ -37,7 +37,11 @@ import type { ExtendedLiveQueryStore } from './createLiveQueryStore.ts'
 import LiveQueryStore from './createLiveQueryStore.ts'
 import { unauthorized } from './errors.ts'
 import extendSchema from './extendSchema.ts'
-import type { GraphQLContext, WebSocketGraphQLContext } from './types.ts'
+import type {
+  GraphQLContext,
+  HttpGraphQLContext,
+  WebSocketGraphQLContext,
+} from './types.ts'
 
 export { Socket }
 
@@ -88,7 +92,11 @@ export interface ServerOptions<Context> extends Pick<
   redis?: RedisAdapter
   wrapExecute?: <T>(
     execute: () => T,
-    context: Context & Omit<GraphQLContext, 'queriedFields'>,
+    context: Context &
+      (
+        | Omit<WebSocketGraphQLContext, 'queriedFields'>
+        | Omit<HttpGraphQLContext, 'queriedFields'>
+      ),
   ) => T | Promise<T>
 }
 

@@ -17,12 +17,13 @@ function createClient(options: ClientOptions): {
 
 ## Options
 
-| Option             | Type          | Default         | Description                                |
-| ------------------ | ------------- | --------------- | ------------------------------------------ |
-| `path`             | `string`      | `'/ws/'`        | Socket.IO server path                      |
-| `transports`       | `string[]`    | `['websocket']` | Allowed transports                         |
-| `graphqlNamespace` | `string`      | `'graphql'`     | Socket.IO namespace to connect to          |
-| `onConnect`        | `() => object`| —               | Return auth data for the connection        |
+| Option             | Type          | Default         | Description                                           |
+| ------------------ | ------------- | --------------- | ----------------------------------------------------- |
+| `path`             | `string`      | `'/ws/'`        | Socket.IO server path                                 |
+| `transports`       | `string[]`    | `['websocket']` | Allowed transports                                    |
+| `graphqlNamespace` | `string`      | `'graphql'`     | Socket.IO namespace to connect to                     |
+| `withCredentials`  | `boolean`     | —               | Send cookies with cross-origin requests               |
+| `onConnect`        | `() => object`| —               | Return auth data for the connection                   |
 
 ## Return Values
 
