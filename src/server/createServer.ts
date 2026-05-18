@@ -35,7 +35,7 @@ import {
 } from './const.ts'
 import type { ExtendedLiveQueryStore } from './createLiveQueryStore.ts'
 import LiveQueryStore from './createLiveQueryStore.ts'
-import { unauthorized } from './errors.ts'
+import { ConnectionRejectedError, unauthorized } from './errors.ts'
 import extendSchema from './extendSchema.ts'
 import type {
   GraphQLContext,
@@ -135,8 +135,17 @@ export function createServer<Context>({
 
   if (onConnect) {
     namespace.use(async (socket, next) => {
-      await onConnect(socket)
-      next()
+      try {
+        await onConnect(socket)
+        next()
+      } catch (err) {
+        if (err instanceof ConnectionRejectedError) {
+          next(err)
+        } else {
+          console.error('[socketql] unexpected onConnect error:', err)
+          next(new Error('Internal server error'))
+        }
+      }
     })
   }
 

@@ -14,7 +14,7 @@ import emitExchange from './exchanges/emitExchange.ts'
 import holdSubscriptionExchange from './exchanges/holdSubscriptionExchange.ts'
 
 interface ClientOptions extends Partial<
-  Pick<ManagerOptions, 'path' | 'transports' | 'withCredentials'>
+  Pick<ManagerOptions, 'path' | 'transports' | 'withCredentials' | 'autoConnect'>
 > {
   graphqlNamespace?: string
   onConnect?: () => Record<string, any>
@@ -25,12 +25,14 @@ export function createClient({
   transports = ['websocket'],
   graphqlNamespace = 'graphql',
   withCredentials,
+  autoConnect,
   onConnect,
 }: ClientOptions = {}) {
   const manager = new SocketManager({
     path,
     transports,
     withCredentials,
+    autoConnect,
   })
 
   const graphQLSocket = manager.socket(`/${graphqlNamespace}`, {

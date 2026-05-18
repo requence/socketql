@@ -283,11 +283,36 @@ import type {
 
 ## Lifecycle Hooks
 
+### onConnect
+
+Called when a client connects, before any GraphQL operations are processed. Use this to authenticate connections.
+
+To **reject** a connection, throw a `ConnectionRejectedError`. The client will receive a `connect_error` event with the error message and no server-side log is produced:
+
+```ts
+import { ConnectionRejectedError, createServer } from '@requence/socketql/server'
+
+createServer({
+  onConnect: async (socket) => {
+    const token = socket.handshake.auth?.token
+
+    if (!token || !(await isValid(token))) {
+      throw new ConnectionRejectedError('Unauthorized')
+    }
+
+    socket.data.userId = getUserId(token)
+  },
+})
+```
+
+:::caution
+Only `ConnectionRejectedError` is treated as an intentional rejection. Any other thrown error is considered a bug — it will be logged to `stderr` with `[socketql] unexpected onConnect error:` and the client receives a generic `"Internal server error"` message.
+:::
+
+### onDisconnect
+
 ```ts
 createServer({
-  onConnect: (socket) => {
-    console.log('connected:', socket.id)
-  },
   onDisconnect: (socket, reason) => {
     console.log('disconnected:', socket.id, reason)
   },

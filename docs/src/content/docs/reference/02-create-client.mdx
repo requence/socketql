@@ -23,6 +23,7 @@ function createClient(options: ClientOptions): {
 | `transports`       | `string[]`    | `['websocket']` | Allowed transports                                    |
 | `graphqlNamespace` | `string`      | `'graphql'`     | Socket.IO namespace to connect to                     |
 | `withCredentials`  | `boolean`     | —               | Send cookies with cross-origin requests               |
+| `autoConnect`      | `boolean`     | `true`          | Connect automatically on creation. Set to `false` to defer connection until `manager.open()` is called. |
 | `onConnect`        | `() => object`| —               | Return auth data for the connection                   |
 
 ## Return Values

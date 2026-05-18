@@ -26,6 +26,8 @@ const { client, manager, invalidate } = createClient({
 
 ## Authentication
 
+### Via auth data
+
 Pass auth data on connect:
 
 ```ts
@@ -35,6 +37,23 @@ createClient({
   }),
 })
 ```
+
+### Via cookies
+
+When using `httpOnly` cookies for authentication, set `autoConnect: false` to prevent the client from connecting before the user has logged in. Call `manager.open()` explicitly once the session is established:
+
+```ts
+const { client, manager } = createClient({
+  autoConnect: false,
+})
+
+// After login, open the connection
+manager.open()
+```
+
+:::tip
+This pattern is useful when the login page is part of the same SPA. Without `autoConnect: false`, the client would attempt a WebSocket connection immediately on page load — before the user has authenticated — resulting in a rejected connection.
+:::
 
 ## Cache Invalidation
 
