@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.3.3
+
+### Patch Changes
+
+- [`02a2e5d`](https://github.com/requence/socketql/commit/02a2e5d6756ae25dfc907c17ed540725ce1c835b) Thanks [@Torsten85](https://github.com/Torsten85)! - allow createClient to be called with no arguments
+
 ## 1.3.2
 
 ### Patch Changes
