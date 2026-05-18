@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.3.4
+
+### Patch Changes
+
+- [`f6149d2`](https://github.com/requence/socketql/commit/f6149d27a9392c9eae4a1b91103dddd116f3560e) Thanks [@Torsten85](https://github.com/Torsten85)! - added autoConnect option to client and correctly handle reject connection in onConnect
+
 ## 1.3.3
 
 ### Patch Changes
