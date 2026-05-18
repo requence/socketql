@@ -26,7 +26,7 @@ export function createClient({
   graphqlNamespace = 'graphql',
   withCredentials,
   onConnect,
-}: ClientOptions) {
+}: ClientOptions = {}) {
   const manager = new SocketManager({
     path,
     transports,
