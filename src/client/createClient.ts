@@ -13,8 +13,17 @@ import cacheExchange from './exchanges/cacheExchange.ts'
 import emitExchange from './exchanges/emitExchange.ts'
 import holdSubscriptionExchange from './exchanges/holdSubscriptionExchange.ts'
 
-export interface ConnectionError extends Error {
+export class ConnectionError extends Error {
   data?: Record<string, any>
+
+  constructor(
+    message: string,
+    options?: { data?: Record<string, any>; cause?: unknown },
+  ) {
+    super(message, { cause: options?.cause })
+    this.name = 'ConnectionError'
+    this.data = options?.data
+  }
 }
 
 interface ClientOptions extends Partial<
@@ -62,8 +71,12 @@ export function createClient({
   }
 
   graphQLSocket.on('connect_error', (err) => {
+    const connectionError = new ConnectionError(err.message, {
+      data: (err as any).data,
+      cause: err,
+    })
     for (const listener of errorListeners) {
-      listener(err)
+      listener(connectionError)
     }
   })
 
@@ -144,6 +157,11 @@ export function createClient({
   return Object.assign(client, {
     invalidate: cache.invalidate,
     connect: () => graphQLSocket.connect(),
+    disconnect: () => graphQLSocket.disconnect(),
+    reconnect: () => {
+      graphQLSocket.disconnect()
+      graphQLSocket.connect()
+    },
     onConnect: (cb: () => void) => {
       connectListeners.add(cb)
       return () => {

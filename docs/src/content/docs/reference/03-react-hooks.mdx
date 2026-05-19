@@ -7,7 +7,7 @@ All exports are available from `@requence/socketql/client/react`.
 
 ## SocketQLProvider
 
-Wraps URQL's `Provider` and manages the WebSocket connection lifecycle. Calls `connect()` on mount and throws connection errors to the nearest React error boundary.
+Wraps URQL's `Provider` and manages the WebSocket connection lifecycle. Calls `connect()` on mount. By default, connection errors are thrown to the nearest React error boundary. Pass `onConnectError` to handle them manually instead.
 
 ```tsx
 import { SocketQLProvider } from '@requence/socketql/client/react'
@@ -19,13 +19,15 @@ import { SocketQLProvider } from '@requence/socketql/client/react'
 
 ### Props
 
-| Prop     | Type             | Description                                 |
-| -------- | ---------------- | ------------------------------------------- |
-| `client` | `SocketQLClient` | The client returned by `createClient`       |
+| Prop             | Type                                  | Description                                                       |
+| ---------------- | ------------------------------------- | ----------------------------------------------------------------- |
+| `client`         | `SocketQLClient`                      | The client returned by `createClient`                             |
+| `onConnect`      | `() => void`                          | Called on successful connection                                   |
+| `onConnectError` | `(error: ConnectionError) => void`    | Called on connection error. When set, errors are **not** thrown to the error boundary. |
 
 ### Error Boundary Integration
 
-When the server rejects the connection, the provider throws the `ConnectionError` during render. Wrap it in an error boundary to handle rejections:
+When no `onConnectError` prop is provided, the provider throws the `ConnectionError` during render. Wrap it in an error boundary to handle rejections:
 
 ```tsx
 <ErrorBoundary fallback={<LoginPage />}>
@@ -35,7 +37,23 @@ When the server rejects the connection, the provider throws the `ConnectionError
 </ErrorBoundary>
 ```
 
-The same client can be reused after the error boundary resets — the provider will re-register its error listener and call `connect()` again.
+The same client can be reused after the error boundary resets — the provider will re-register its listeners and call `connect()` again.
+
+### Manual Error Handling
+
+Pass `onConnectError` to handle connection errors without an error boundary. This is useful when you want to call `client.reconnect()` after updating auth state:
+
+```tsx
+<SocketQLProvider
+  client={client}
+  onConnectError={(err) => {
+    console.log(err.data) // e.g. { code: 'EXPIRED' }
+    refreshToken().then(() => client.reconnect())
+  }}
+>
+  <App />
+</SocketQLProvider>
+```
 
 ### SocketQLClient
 

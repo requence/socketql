@@ -31,6 +31,8 @@ The returned `SocketQLClient` extends URQL's `Client` with additional methods.
 | Method           | Signature                                                        | Description                                          |
 | ---------------- | ---------------------------------------------------------------- | ---------------------------------------------------- |
 | `connect`        | `() => void`                                                     | Initiate the WebSocket connection                    |
+| `disconnect`     | `() => void`                                                     | Close the WebSocket connection                       |
+| `reconnect`      | `() => void`                                                     | Disconnect and immediately reconnect (picks up new cookies/auth) |
 | `invalidate`     | `(target: string \| DocumentNode \| Array) => void`              | Manually invalidate cached operation results         |
 | `onConnect`      | `(cb: () => void) => () => void`                                 | Subscribe to successful connections. Returns unsubscribe. |
 | `onConnectError` | `(cb: (error: ConnectionError) => void) => () => void`           | Subscribe to connection errors. Returns unsubscribe. |
@@ -42,7 +44,7 @@ The `onConnect` and `onConnectError` options are convenience shorthands that reg
 ## ConnectionError
 
 ```ts
-interface ConnectionError extends Error {
+class ConnectionError extends Error {
   data?: Record<string, any>
 }
 ```

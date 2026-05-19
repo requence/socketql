@@ -17,20 +17,11 @@ const client = createClient({
 })
 ```
 
-### Client Methods
-
-The returned client is a standard URQL `Client` extended with:
-
-| Method           | Signature                                    | Description                                          |
-| ---------------- | -------------------------------------------- | ---------------------------------------------------- |
-| `connect`        | `() => void`                                 | Initiate the WebSocket connection                    |
-| `invalidate`     | `(target) => void`                           | Manually invalidate cached queries                   |
-| `onConnect`      | `(cb: () => void) => () => void`             | Subscribe to successful connections. Returns unsubscribe. |
-| `onConnectError` | `(cb: (error: ConnectionError) => void) => () => void` | Subscribe to connection errors. Returns unsubscribe. |
+The returned client is a standard URQL `Client` extended with additional methods for connection management, cache invalidation, and event subscriptions. See the [createClient reference](/reference/create-client/#client-methods) for the full list.
 
 ## SocketQLProvider
 
-The `SocketQLProvider` wraps URQL's `Provider` and manages the connection lifecycle. It calls `connect()` on mount and propagates connection errors to the nearest React error boundary.
+The `SocketQLProvider` wraps URQL's `Provider` and manages the connection lifecycle. It calls `connect()` on mount and, by default, propagates connection errors to the nearest React error boundary. Pass `onConnectError` to handle errors manually instead (e.g. to trigger `client.reconnect()`).
 
 ```tsx
 import { createClient } from '@requence/socketql/client'
@@ -51,10 +42,12 @@ function App() {
 }
 ```
 
-When the server rejects the connection (via `ConnectionRejectedError`), the error is thrown during render and caught by the error boundary. The same client instance can be reused after the error boundary resets — the provider will call `connect()` again on re-mount.
+When the server rejects the connection (via `ConnectionRejectedError`), the error is thrown during render and caught by the error boundary — unless `onConnectError` is set. The same client instance can be reused after the error boundary resets or after a `reconnect()` call.
+
+See the [SocketQLProvider reference](/reference/react-hooks/#socketqlprovider) for the full props list.
 
 :::tip
-The `SocketQLProvider` registers its error listener *before* calling `connect()`, so there is no race condition between the connection attempt and the error handler.
+The `SocketQLProvider` registers its listeners *before* calling `connect()`, so there is no race condition between the connection attempt and the handlers.
 :::
 
 ## Authentication
@@ -82,7 +75,7 @@ When using `httpOnly` cookies, no `auth` option is needed. The `SocketQLProvider
 When the server rejects a connection, the error includes an optional `data` property for structured context:
 
 ```ts
-interface ConnectionError extends Error {
+class ConnectionError extends Error {
   data?: Record<string, any>
 }
 ```
