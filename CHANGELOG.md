@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.6.0
+
+### Minor Changes
+
+- [`407a891`](https://github.com/requence/socketql/commit/407a891871c4afd383e296bceca46a91185ebcd3) Thanks [@Torsten85](https://github.com/Torsten85)! - exported useSubscription hook
+
 ## 1.5.0
 
 ### Minor Changes
