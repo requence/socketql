@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.6.2
+
+### Patch Changes
+
+- [`bab3e1d`](https://github.com/requence/socketql/commit/bab3e1d48ba1935d411f088f53676c2a05029621) Thanks [@Torsten85](https://github.com/Torsten85)! - Fix dist being built with the development JSX transform (`jsxDEV` from `react/jsx-dev-runtime`), which broke consumers in both `vite dev` and `vite build`. The build now explicitly uses `jsx: { development: false }` to emit the production transform (`jsx` from `react/jsx-runtime`).
+
 ## 1.6.1
 
 ### Patch Changes
