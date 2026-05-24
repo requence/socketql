@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.6.1
+
+### Patch Changes
+
+- [`26b20cc`](https://github.com/requence/socketql/commit/26b20cc6ffc589f086921a4319f9ade6062d961c) Thanks [@Torsten85](https://github.com/Torsten85)! - Fix production build by using the production JSX transform (`react/jsx-runtime`) instead of the development transform (`react/jsx-dev-runtime`)
+
 ## 1.6.0
 
 ### Minor Changes
