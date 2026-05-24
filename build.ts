@@ -38,10 +38,14 @@ const result = await Bun.build({
   format: 'esm',
   splitting: true,
   sourcemap: 'external',
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production'),
+  },
   external: [
     'graphql',
     'ioredis',
     'react',
+    'react/jsx-runtime',
     'urql',
     'wonka',
     'dataloader',

@@ -1,6 +1,6 @@
 ---
 title: React Hooks
-description: API reference for the React hooks.
+description: API reference for the React hooks including queries, mutations, and subscriptions.
 ---
 
 All exports are available from `@requence/socketql/client/react`.
@@ -112,3 +112,36 @@ function useMutation<Data, Variables>(
 ### Returns
 
 A tuple of `[result, execute]`, same as URQL's `useMutation`.
+
+---
+
+## useSubscription
+
+Thin wrapper around URQL's `useSubscription`. Throws on errors (use with an error boundary).
+
+```ts
+function useSubscription<Data, Result, Variables>(
+  args: UseSubscriptionArgs<Variables, Data>,
+  handler?: SubscriptionHandler<Data, Result>
+): readonly [Result | undefined, executeFn]
+```
+
+### Parameters
+
+| Option    | Type                                    | Description                          |
+| --------- | --------------------------------------- | ------------------------------------ |
+| `args`    | `UseSubscriptionArgs<Variables, Data>`  | URQL subscription arguments          |
+| `handler` | `SubscriptionHandler<Data, Result>`     | Optional handler to accumulate data across events |
+
+`args` accepts all URQL `UseSubscriptionArgs` options:
+
+| Option            | Type            | Description                          |
+| ----------------- | --------------- | ------------------------------------ |
+| `query`           | `DocumentInput` | The GraphQL subscription document    |
+| `variables`       | `Variables`     | Subscription variables               |
+| `pause`           | `boolean`       | Pause the subscription               |
+
+### Returns
+
+A tuple of `[data, execute]`. `data` is the latest subscription result (or the accumulated result when using a `handler`). Throws the URQL error if the subscription encounters an error.
+

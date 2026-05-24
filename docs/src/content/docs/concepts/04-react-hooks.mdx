@@ -1,6 +1,6 @@
 ---
 title: React Hooks
-description: Using SocketQL React hooks for queries and mutations.
+description: Using SocketQL React hooks for queries, mutations, and subscriptions.
 ---
 
 The `@requence/socketql/client/react` module provides the `SocketQLProvider` and Suspense-ready hooks built on top of URQL.
@@ -80,3 +80,43 @@ function CreateUser() {
 | `invalidate` | `string \| DocumentNode \| Array` | Queries to invalidate after mutation                     |
 | `suspense`   | `boolean`                         | Whether to trigger Suspense (default: `true`)            |
 | `waitOn`     | `string \| DocumentNode \| Array` | Wait for these queries to re-resolve before un-suspending|
+
+## useSubscription
+
+A thin wrapper around URQL's `useSubscription` that throws on errors (for error boundaries) and returns a `[data, execute]` tuple:
+
+```tsx
+import { useSubscription } from '@requence/socketql/client/react'
+
+function ChatMessages() {
+  const [message] = useSubscription({
+    query: OnNewMessageDocument,
+    variables: { channelId: 'general' },
+  })
+
+  if (!message) return <p>Waiting for messages…</p>
+
+  return <p>Latest: {message.text}</p>
+}
+```
+
+### Accumulating Events
+
+Pass a `handler` function to accumulate data across subscription events — useful for building lists from a stream:
+
+```tsx
+function MessageList() {
+  const [messages] = useSubscription(
+    { query: OnNewMessageDocument },
+    (prev = [], event) => [...prev, event],
+  )
+
+  return (
+    <ul>
+      {messages?.map(msg => (
+        <li key={msg.id}>{msg.text}</li>
+      ))}
+    </ul>
+  )
+}
+```
