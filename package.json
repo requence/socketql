@@ -46,7 +46,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "bun run build.ts",
+    "build": "NODE_ENV=production bun run build.ts",
     "check-types": "tsc --noEmit",
     "cs": "changeset",
     "version": "changeset version",

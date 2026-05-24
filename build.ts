@@ -30,6 +30,9 @@ await mkdir(OUT, { recursive: true })
 
 const entrypoints = await collectEntrypoints(SRC)
 
+// Force production JSX transform regardless of ambient NODE_ENV
+process.env.NODE_ENV = 'production'
+
 const result = await Bun.build({
   entrypoints,
   outdir: OUT,
@@ -40,6 +43,11 @@ const result = await Bun.build({
   sourcemap: 'external',
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
+  },
+  jsx: {
+    runtime: 'automatic',
+    development: false,
+    importSource: 'react',
   },
   external: [
     'graphql',
