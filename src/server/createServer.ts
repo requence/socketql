@@ -185,6 +185,15 @@ export function createServer<Context>({
         unwrappedContext,
       )
 
+      // Deep-serialize data to JSON-safe primitives.
+      // This is crucial because standard GraphQL execution retains raw, unresolved custom scalars
+      // (like JS Date objects returned by Drizzle). Since the live query diffing engine (json-patch-plus)
+      // compares object properties and Date objects have no enumerable keys, they would otherwise
+      // be incorrectly diffed as identical.
+      if (result.data) {
+        result.data = JSON.parse(JSON.stringify(result.data))
+      }
+
       ;(
         unwrappedContext.dataLoaders as Map<string, DataLoader<any, any>>
       ).forEach((dataLoader) => {
