@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.6.3
+
+### Patch Changes
+
+- [`eb69753`](https://github.com/requence/socketql/commit/eb6975385caf8a609753f9688ecda6e5b249b1a4) Thanks [@Torsten85](https://github.com/Torsten85)! - Deep-serialize live query execution results to JSON-safe primitives before generating diff patches. This ensures custom scalars (such as JS `Date` objects) are correctly serialized to strings and can be compared properly by the diffing engine.
+
 ## 1.6.2
 
 ### Patch Changes
