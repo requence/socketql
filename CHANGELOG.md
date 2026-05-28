@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.6.4
+
+### Patch Changes
+
+- [`adaf649`](https://github.com/requence/socketql/commit/adaf649fa692b0c118546efa9c97c57070c054b5) Thanks [@Torsten85](https://github.com/Torsten85)! - Add `waitOnTimeout` option to `useMutation` and `waitForResult` to support resolving pending mutation wait locks early.
+
 ## 1.6.3
 
 ### Patch Changes
