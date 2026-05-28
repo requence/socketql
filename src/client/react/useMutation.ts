@@ -18,6 +18,7 @@ export type UseMutationArgs<
   invalidate?: string | DocumentNode | (string | DocumentNode)[]
   suspense?: boolean
   waitOn?: string | DocumentNode | (string | DocumentNode)[]
+  waitOnTimeout?: number
 }
 
 export function useMutation<
@@ -32,7 +33,7 @@ export function useMutation<
       const resolveSuspense =
         args.suspense === false ? () => {} : triggerSuspense()
       const resultsReady = args.waitOn
-        ? waitForResult(args.waitOn)
+        ? waitForResult(args.waitOn, args.waitOnTimeout)
         : Promise.resolve()
 
       const response = await execute(variables, {

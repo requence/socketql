@@ -17,6 +17,7 @@ function onResult(handler: ResultHandler) {
 
 export function waitForResult(
   document: string | DocumentNode | (string | DocumentNode)[],
+  timeout?: number,
 ) {
   const documents = Array.isArray(document) ? document : [document]
 
@@ -31,16 +32,28 @@ export function waitForResult(
   )
 
   return new Promise<void>((resolve) => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+
     const unsubscribe = onResult((result) => {
       const name = getDocumentIdentifier(result.operation.query)
       if (name) {
         names.delete(name)
         if (names.size === 0) {
+          if (timeoutId) {
+            clearTimeout(timeoutId)
+          }
           unsubscribe()
           resolve()
         }
       }
     })
+
+    if (timeout && timeout > 0) {
+      timeoutId = setTimeout(() => {
+        unsubscribe()
+        resolve()
+      }, timeout)
+    }
   })
 }
 

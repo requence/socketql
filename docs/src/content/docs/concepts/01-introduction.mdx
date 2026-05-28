@@ -20,13 +20,13 @@ The library ships four entry points:
 | `@requence/socketql/server`       | Server-side for Node.js: `createServer` with `attach` |
 | `@requence/socketql/server/bun`   | Server-side for Bun: `createServer` with `handler` |
 | `@requence/socketql/server/redis` | Redis adapter for multi-instance deployments     |
-| `@requence/socketql/client`       | Client-side: `createClient` with URQL exchanges  |
+| `@requence/socketql/client`       | Client-side: `createClient` setup               |
 | `@requence/socketql/client/react` | React hooks: `useQuery`, `useMutation`           |
 
 ## How It Works
 
 1. **Server** creates a Socket.IO namespace with a GraphQL execution layer
-2. **Client** connects via WebSocket and sends GraphQL operations through a custom URQL exchange
+2. **Client** connects via WebSocket and manages GraphQL operations transparently under the hood
 3. **Live queries** are tracked with resource identifiers — when the server invalidates an identifier, all subscribed queries re-execute and the diff is pushed to clients
 
 ## Quick Example

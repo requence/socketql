@@ -74,12 +74,13 @@ function CreateUser() {
 
 ### Options
 
-| Option       | Type                              | Description                                              |
-| ------------ | --------------------------------- | -------------------------------------------------------- |
-| `query`      | `DocumentInput`                   | The mutation document                                    |
-| `invalidate` | `string \| DocumentNode \| Array` | Queries to invalidate after mutation                     |
-| `suspense`   | `boolean`                         | Whether to trigger Suspense (default: `true`)            |
-| `waitOn`     | `string \| DocumentNode \| Array` | Wait for these queries to re-resolve before un-suspending|
+| Option          | Type                              | Description                                              |
+| --------------- | --------------------------------- | -------------------------------------------------------- |
+| `query`         | `DocumentInput`                   | The mutation document                                    |
+| `invalidate`    | `string \| DocumentNode \| Array` | Queries to invalidate after mutation                     |
+| `suspense`      | `boolean`                         | Whether to trigger Suspense (default: `true`)            |
+| `waitOn`        | `string \| DocumentNode \| Array` | Wait for these queries to re-resolve before un-suspending|
+| `waitOnTimeout` | `number`                          | Timeout in milliseconds to resolve the wait lock early   |
 
 ## useSubscription
 

@@ -3,7 +3,7 @@ title: Client
 description: Setting up the SocketQL client.
 ---
 
-The client module creates a Socket.IO-backed URQL client with custom exchanges for caching, invalidation, and live query support.
+The client module creates a Socket.IO-backed client for caching, invalidation, and live query support.
 
 ## createClient
 
@@ -122,12 +122,3 @@ client.invalidate(MyQueryDocument)
 // Multiple at once
 client.invalidate(['QueryA', 'QueryB'])
 ```
-
-## Built-in Exchanges
-
-The client automatically includes:
-
-1. **holdSubscriptionExchange** — delays teardown of live subscriptions by 500ms to prevent re-subscribe flicker during Suspense transitions
-2. **emitExchange** — emits result events for cross-component coordination via `waitForResult`
-3. **cacheExchange** — request-level cache that doesn't auto-invalidate live queries
-4. **subscriptionExchange** — routes all operations through Socket.IO with JSON diff-patching

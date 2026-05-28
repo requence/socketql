@@ -3,7 +3,7 @@ title: createClient
 description: API reference for the createClient function.
 ---
 
-Creates a Socket.IO-backed URQL client with custom exchanges. The connection is **not started automatically** — use the `SocketQLProvider` or call `connect()` manually.
+Creates a Socket.IO-backed URQL client. The connection is **not started automatically** — use the `SocketQLProvider` or call `connect()` manually.
 
 ## Signature
 
@@ -62,15 +62,4 @@ client.invalidate(UsersDocument)
 
 // Multiple queries
 client.invalidate(['Users', ProjectsDocument])
-```
-
-## waitForResult
-
-Exported from `@requence/socketql/client`, this utility returns a promise that resolves when specific query results arrive:
-
-```ts
-import { waitForResult } from '@requence/socketql/client'
-
-await waitForResult('Users')
-await waitForResult(['Users', 'Projects'])
 ```

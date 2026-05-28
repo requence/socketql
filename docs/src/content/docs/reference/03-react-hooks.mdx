@@ -102,12 +102,13 @@ function useMutation<Data, Variables>(
 
 ### Parameters
 
-| Option       | Type                              | Default | Description                                        |
-| ------------ | --------------------------------- | ------- | -------------------------------------------------- |
-| `query`      | `DocumentInput`                   | —       | The mutation document                              |
-| `invalidate` | `string \| DocumentNode \| Array` | —       | Queries to invalidate on success                   |
-| `suspense`   | `boolean`                         | `true`  | Whether to trigger Suspense during execution       |
-| `waitOn`     | `string \| DocumentNode \| Array` | —       | Wait for these queries to re-resolve before un-suspending |
+| Option          | Type                              | Default | Description                                        |
+| --------------- | --------------------------------- | ------- | -------------------------------------------------- |
+| `query`         | `DocumentInput`                   | —       | The mutation document                              |
+| `invalidate`    | `string \| DocumentNode \| Array` | —       | Queries to invalidate on success                   |
+| `suspense`      | `boolean`                         | `true`  | Whether to trigger Suspense during execution       |
+| `waitOn`        | `string \| DocumentNode \| Array` | —       | Wait for these queries to re-resolve before un-suspending |
+| `waitOnTimeout` | `number`                          | —       | Timeout in milliseconds to resolve the wait lock early |
 
 ### Returns
 
