@@ -28,14 +28,19 @@ The returned `SocketQLClient` extends URQL's `Client` with additional methods.
 
 ## Client Methods
 
-| Method           | Signature                                                        | Description                                          |
-| ---------------- | ---------------------------------------------------------------- | ---------------------------------------------------- |
-| `connect`        | `() => void`                                                     | Initiate the WebSocket connection                    |
-| `disconnect`     | `() => void`                                                     | Close the WebSocket connection                       |
-| `reconnect`      | `() => void`                                                     | Disconnect and immediately reconnect (picks up new cookies/auth) |
-| `invalidate`     | `(target: string \| DocumentNode \| Array) => void`              | Manually invalidate cached operation results         |
-| `onConnect`      | `(cb: () => void) => () => void`                                 | Subscribe to successful connections. Returns unsubscribe. |
-| `onConnectError` | `(cb: (error: ConnectionError) => void) => () => void`           | Subscribe to connection errors. Returns unsubscribe. |
+| Method               | Signature                                                        | Description                                          |
+| -------------------- | ---------------------------------------------------------------- | ---------------------------------------------------- |
+| `connect`            | `() => void`                                                     | Initiate the WebSocket connection                    |
+| `disconnect`         | `() => void`                                                     | Close the WebSocket connection                       |
+| `reconnect`          | `() => void`                                                     | Disconnect and immediately reconnect (picks up new cookies/auth) |
+| `socket`             | `(nsp: string, opts?) => Socket`                                 | Create an additional Socket.IO namespace socket via the underlying manager |
+| `invalidate`         | `(target: string \| DocumentNode \| Array) => void`              | Manually invalidate cached operation results         |
+| `onConnect`          | `(cb: () => void) => () => void`                                 | Subscribe to successful connections. Returns unsubscribe. |
+| `onConnectError`     | `(cb: (error: ConnectionError) => void) => () => void`           | Subscribe to connection errors. Returns unsubscribe. |
+| `onReconnect`        | `(cb: () => void) => () => void`                                 | Subscribe to successful reconnections. Returns unsubscribe. |
+| `onReconnectAttempt`  | `(cb: (attempt: number) => void) => () => void`                  | Subscribe to reconnection attempts. Returns unsubscribe. |
+| `onReconnectError`   | `(cb: (error: Error) => void) => () => void`                     | Subscribe to reconnection errors. Returns unsubscribe. |
+| `onReconnectFailed`  | `(cb: () => void) => () => void`                                 | Called when reconnection fails permanently. Returns unsubscribe. |
 
 :::note
 The `onConnect` and `onConnectError` options are convenience shorthands that register listeners at creation time. The client methods allow subscribing and unsubscribing dynamically at any point.

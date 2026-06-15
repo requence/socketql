@@ -122,3 +122,42 @@ client.invalidate(MyQueryDocument)
 // Multiple at once
 client.invalidate(['QueryA', 'QueryB'])
 ```
+
+## Reconnect Events
+
+The client exposes the underlying Socket.IO manager's reconnect events. Each method returns an unsubscribe function:
+
+```ts
+const unsubReconnect = client.onReconnect(() => {
+  console.log('Reconnected successfully')
+})
+
+const unsubAttempt = client.onReconnectAttempt((attempt) => {
+  console.log(`Reconnect attempt #${attempt}`)
+})
+
+const unsubError = client.onReconnectError((err) => {
+  console.error('Reconnect error:', err.message)
+})
+
+const unsubFailed = client.onReconnectFailed(() => {
+  console.error('All reconnect attempts failed')
+})
+
+// Later
+unsubReconnect()
+unsubAttempt()
+unsubError()
+unsubFailed()
+```
+
+## Custom Namespace Sockets
+
+The `socket` method exposes the underlying Socket.IO manager's `socket()`, allowing you to create additional namespace sockets that share the same connection:
+
+```ts
+const chatSocket = client.socket('/chat')
+chatSocket.on('message', (msg) => {
+  console.log('New chat message:', msg)
+})
+```

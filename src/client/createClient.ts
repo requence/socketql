@@ -156,6 +156,7 @@ export function createClient({
 
   return Object.assign(client, {
     invalidate: cache.invalidate,
+    socket: manager.socket.bind(manager),
     connect: () => graphQLSocket.connect(),
     disconnect: () => graphQLSocket.disconnect(),
     reconnect: () => {
@@ -172,6 +173,30 @@ export function createClient({
       errorListeners.add(cb)
       return () => {
         errorListeners.delete(cb)
+      }
+    },
+    onReconnect: (cb: () => void) => {
+      manager.on('reconnect', cb)
+      return () => {
+        manager.off('reconnect', cb)
+      }
+    },
+    onReconnectAttempt: (cb: (attempt: number) => void) => {
+      manager.on('reconnect_attempt', cb)
+      return () => {
+        manager.off('reconnect_attempt', cb)
+      }
+    },
+    onReconnectError: (cb: (error: Error) => void) => {
+      manager.on('reconnect_error', cb)
+      return () => {
+        manager.off('reconnect_error', cb)
+      }
+    },
+    onReconnectFailed: (cb: () => void) => {
+      manager.on('reconnect_failed', cb)
+      return () => {
+        manager.off('reconnect_failed', cb)
       }
     },
   })
