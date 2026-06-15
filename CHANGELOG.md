@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.7.0
+
+### Minor Changes
+
+- [`930c224`](https://github.com/requence/socketql/commit/930c224c1b3afa1f066ee58c79af622a457241dd) Thanks [@Torsten85](https://github.com/Torsten85)! - Expose Socket.IO manager's `socket()` method and reconnect events (`onReconnect`, `onReconnectAttempt`, `onReconnectError`, `onReconnectFailed`) on the client.
+
 ## 1.6.4
 
 ### Patch Changes
