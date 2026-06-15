@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.7.1
+
+### Patch Changes
+
+- [`788ce20`](https://github.com/requence/socketql/commit/788ce20e86ad62f61cc4c94953f0c3cd85b06232) Thanks [@Torsten85](https://github.com/Torsten85)! - fix errors thrown during live query streaming being serialized as `{}` over Socket.IO (causing `[GraphQL] [object Object]` on the client). Errors are now wrapped in proper `GraphQLError` instances with string messages and routed through `formatError`.
+
 ## 1.7.0
 
 ### Minor Changes
