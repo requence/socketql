@@ -17,7 +17,7 @@ import { registerSocketIOGraphQLServer } from '@n1ru4l/socket-io-graphql-server'
 import type DataLoader from 'dataloader'
 import {
   type ExecutionArgs,
-  type GraphQLError,
+  GraphQLError,
   type GraphQLSchema,
   defaultFieldResolver as defaultGraphQLFieldResolver,
   getIntrospectionQuery,
@@ -170,20 +170,30 @@ export function createServer<Context>({
         ? context[originalContextSymbol]
         : context
 
-      const result = await wrapExecute(
-        () =>
-          graphqlExecute({
-            contextValue: {
-              ...context,
-              [originalContextSymbol]: {
-                ...context[originalContextSymbol],
-                [liveContextSymbol]: context,
+      let result: Awaited<ReturnType<typeof graphqlExecute>>
+      try {
+        result = await wrapExecute(
+          () =>
+            graphqlExecute({
+              contextValue: {
+                ...context,
+                [originalContextSymbol]: {
+                  ...context[originalContextSymbol],
+                  [liveContextSymbol]: context,
+                },
               },
-            },
-            ...args,
-          }),
-        unwrappedContext,
-      )
+              ...args,
+            }),
+          unwrappedContext,
+        )
+      } catch (err) {
+        const error = new GraphQLError(
+          err instanceof Error ? err.message : String(err),
+        )
+        return {
+          errors: [formatError ? formatError(error) : error],
+        }
+      }
 
       // Deep-serialize data to JSON-safe primitives.
       // This is crucial because standard GraphQL execution retains raw, unresolved custom scalars
@@ -217,8 +227,40 @@ export function createServer<Context>({
       resolvers.push(schema.resolvers)
     }
   }
-  const execute = async (args: ExecutionArgs) =>
-    applyLiveQueryJSONDiffPatchGenerator(liveExecute(args))
+
+  // Wraps an async iterable so that errors thrown during iteration
+  // (e.g. from the live query patch generator or the execute wrapper)
+  // are converted to proper ExecutionResults with serializable GraphQLError
+  // instances. Without this, @n1ru4l/socket-io-graphql-server's .catch handler
+  // puts raw Error objects into `{ errors: [err] }`, and since Error.message
+  // is non-enumerable, JSON.stringify serializes them as `{}`, causing the
+  // client to display "[GraphQL] [object Object]".
+  async function* wrapAsyncIterableErrors(
+    source: AsyncIterable<any>,
+  ): AsyncGenerator<any> {
+    try {
+      yield* source
+    } catch (err) {
+      const error = new GraphQLError(
+        err instanceof Error ? err.message : String(err),
+      )
+      yield {
+        errors: [formatError ? formatError(error) : error],
+      }
+    }
+  }
+
+  const execute = async (args: ExecutionArgs) => {
+    const result = applyLiveQueryJSONDiffPatchGenerator(liveExecute(args))
+    if (
+      result != null &&
+      typeof result === 'object' &&
+      Symbol.asyncIterator in result
+    ) {
+      return wrapAsyncIterableErrors(result)
+    }
+    return result
+  }
 
   let generatedSchema: GraphQLSchema
 
