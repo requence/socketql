@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.8.0
+
+### Minor Changes
+
+- [`d55df92`](https://github.com/requence/socketql/commit/d55df926c087ab4911ad3545187137000887ffd5) Thanks [@Torsten85](https://github.com/Torsten85)! - Change useQuery hook to return a [data, reexecute] tuple and update the React hooks documentation.
+
 ## 1.7.2
 
 ### Patch Changes
