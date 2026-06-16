@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.8.1
+
+### Patch Changes
+
+- [`c4511f4`](https://github.com/requence/socketql/commit/c4511f44751e461fdde8b89ecd23b667098c9e50) Thanks [@Torsten85](https://github.com/Torsten85)! - reexport urql types, updated depedendencies
+
 ## 1.8.0
 
 ### Minor Changes
