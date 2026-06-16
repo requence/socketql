@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.8.3
+
+### Patch Changes
+
+- [`ac61d80`](https://github.com/requence/socketql/commit/ac61d80420538ef07025401c2cb8d15e1bfc1c52) Thanks [@Torsten85](https://github.com/Torsten85)! - correctly export OperationError as a type
+
 ## 1.8.2
 
 ### Patch Changes
