@@ -30,22 +30,27 @@ function App() {
 
 ## useQuery
 
-A thin wrapper around URQL's `useQuery` that throws on errors (for error boundaries) and returns data directly:
+A thin wrapper around URQL's `useQuery` that throws on errors (for error boundaries) and returns a `[data, reexecute]` tuple:
 
 ```tsx
 import { useQuery } from '@requence/socketql/client/react'
 
 function UserList() {
-  const data = useQuery({
+  const [data, reexecute] = useQuery({
     query: UsersDocument,
   })
 
   return (
-    <ul>
-      {data.users.map(user => (
-        <li key={user.id}>{user.name}</li>
-      ))}
-    </ul>
+    <>
+      <button onClick={() => reexecute({ requestPolicy: 'network-only' })}>
+        Refresh
+      </button>
+      <ul>
+        {data.users.map(user => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+      </ul>
+    </>
   )
 }
 ```

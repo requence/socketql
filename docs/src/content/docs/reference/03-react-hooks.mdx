@@ -70,7 +70,7 @@ Suspense-ready query hook. Throws on errors (use with an error boundary).
 ```ts
 function useQuery<Data, Variables>(
   args: UseQueryArgs<Variables, Data>
-): Data
+): readonly [Data, reexecuteFn]
 ```
 
 ### Parameters
@@ -86,7 +86,7 @@ Accepts all URQL `UseQueryArgs` options:
 
 ### Returns
 
-Returns `Data` directly (not wrapped in a result object). Throws the URQL error if the query fails.
+Returns a tuple of `[data, reexecute]`. `data` is the query result, and `reexecute` is a function to trigger a query execution. Throws the URQL error if the query fails.
 
 ---
 

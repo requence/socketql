@@ -2,13 +2,18 @@ import {
   type AnyVariables,
   type UseQueryArgs,
   useQuery as useUrqlQuery,
+  type OperationContext,
 } from 'urql'
+
+export type Reexecute = (opts?: Partial<OperationContext>) => void
 
 export function useQuery<
   Data = any,
   Variables extends AnyVariables = AnyVariables,
->(args: UseQueryArgs<Variables, Data>): Data {
-  const [result] = useUrqlQuery({
+>(
+  args: UseQueryArgs<Variables, Data>,
+): readonly [Data, Reexecute] {
+  const [result, reexecute] = useUrqlQuery({
     ...args,
   })
 
@@ -16,5 +21,6 @@ export function useQuery<
     throw result.error
   }
 
-  return result.data!
+  return [result.data!, reexecute] as const
 }
+
