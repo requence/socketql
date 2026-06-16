@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.7.2
+
+### Patch Changes
+
+- [`0a92d2f`](https://github.com/requence/socketql/commit/0a92d2f46935d5f05f93bdfc4b702426e0112776) Thanks [@Torsten85](https://github.com/Torsten85)! - Export the socket.io-client `Socket` type from the client module.
+
 ## 1.7.1
 
 ### Patch Changes
