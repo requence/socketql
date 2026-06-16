@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.8.2
+
+### Patch Changes
+
+- [`eb12e0d`](https://github.com/requence/socketql/commit/eb12e0de3d76bba43b0d1f701abc9efbcdc26d9a) Thanks [@Torsten85](https://github.com/Torsten85)! - workaround for bun bundler bug
+
 ## 1.8.1
 
 ### Patch Changes
