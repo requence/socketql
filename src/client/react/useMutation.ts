@@ -10,6 +10,8 @@ import { useSuspensePromise } from './useSuspensePromise.ts'
 import { waitForResult } from '../exchanges/emitExchange.ts'
 import getDocumentIdentifier from '../getDocumentIdentifier.ts'
 
+export type { UseMutationState, UseMutationExecute } from 'urql'
+
 export type UseMutationArgs<
   Data = any,
   Variables extends AnyVariables = AnyVariables,

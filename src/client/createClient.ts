@@ -3,7 +3,6 @@ import { applyLiveQueryJSONDiffPatch } from '@n1ru4l/graphql-live-query-patch-js
 import { applyAsyncIterableIteratorToSink } from '@n1ru4l/push-pull-async-iterable-iterator'
 import { createSocketIOGraphQLClient } from '@n1ru4l/socket-io-graphql-client'
 import { type ManagerOptions, Manager as SocketManager } from 'socket.io-client'
-export type { Socket } from 'socket.io-client'
 
 import {
   type Operation,
@@ -29,7 +28,10 @@ export class ConnectionError extends Error {
 }
 
 interface ClientOptions extends Partial<
-  Pick<ManagerOptions, 'path' | 'transports' | 'withCredentials' | 'autoConnect'>
+  Pick<
+    ManagerOptions,
+    'path' | 'transports' | 'withCredentials' | 'autoConnect'
+  >
 > {
   graphqlNamespace?: string
   auth?: () => Record<string, any>
