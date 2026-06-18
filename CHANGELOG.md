@@ -1,5 +1,11 @@
 # @requence/socketql
 
+## 1.8.4
+
+### Patch Changes
+
+- [`268a72d`](https://github.com/requence/socketql/commit/268a72dca67194460b7e79bab7805fb4f6038f47) Thanks [@Torsten85](https://github.com/Torsten85)! - Resolve fragment spreads in queriedFields so that fields from named fragments are included in the field list.
+
 ## 1.8.3
 
 ### Patch Changes
