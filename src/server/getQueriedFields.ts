@@ -1,8 +1,16 @@
-import { type GraphQLResolveInfo, Kind, type SelectionSetNode } from 'graphql'
+import {
+  type FragmentDefinitionNode,
+  type GraphQLResolveInfo,
+  Kind,
+  type SelectionSetNode,
+} from 'graphql'
 
 import { unauthorized } from './errors.ts'
 
-function getSelectedFields(selectionSet: SelectionSetNode) {
+function getSelectedFields(
+  selectionSet: SelectionSetNode,
+  fragments: Record<string, FragmentDefinitionNode>,
+) {
   const fields: Array<string> = []
   for (const selection of selectionSet.selections) {
     switch (selection.kind) {
@@ -12,7 +20,7 @@ function getSelectedFields(selectionSet: SelectionSetNode) {
 
         if (selection.selectionSet) {
           fields.push(
-            ...getSelectedFields(selection.selectionSet).map(
+            ...getSelectedFields(selection.selectionSet, fragments).map(
               (n) => `${name}.${n}`,
             ),
           )
@@ -24,11 +32,23 @@ function getSelectedFields(selectionSet: SelectionSetNode) {
         const fragmentType = selection.typeCondition?.name.value
         if (fragmentType) {
           fields.push(
-            ...getSelectedFields(selection.selectionSet).map(
+            ...getSelectedFields(selection.selectionSet, fragments).map(
               (n) => `#${fragmentType}.${n}`,
             ),
           )
         }
+        break
+      }
+
+      case Kind.FRAGMENT_SPREAD: {
+        const fragmentName = selection.name.value
+        const fragment = fragments[fragmentName]
+        if (fragment) {
+          fields.push(
+            ...getSelectedFields(fragment.selectionSet, fragments),
+          )
+        }
+        break
       }
     }
   }
@@ -75,7 +95,7 @@ function expandFields(fields: Fields): Array<string> {
 
 export default function getQueriedFields(info: GraphQLResolveInfo) {
   const queriedFields = info.fieldNodes[0].selectionSet
-    ? getSelectedFields(info.fieldNodes[0].selectionSet)
+    ? getSelectedFields(info.fieldNodes[0].selectionSet, info.fragments)
     : []
 
   return {
