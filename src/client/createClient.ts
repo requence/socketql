@@ -137,22 +137,47 @@ export function createClient({
       subscriptionExchange({
         enableAllOperations: true,
         forwardSubscription: (operation) => ({
-          subscribe: (sink) => ({
-            unsubscribe: applyAsyncIterableIteratorToSink(
-              applyLiveQueryJSONDiffPatch(
-                ioGraphQLClient.execute({
-                  operation: operation.query!,
-                  variables: mapVariables(operation.variables),
-                }),
-              ),
-              // structuredClone ensures patched results are new references,
-              // required because @n1ru4l/json-patch-plus mutates in place
-              {
-                ...sink,
-                next: (value: any) => sink.next(structuredClone(value)),
+          subscribe: (sink) => {
+            let disposed = false
+            let currentUnsubscribe: (() => void) | undefined
+
+            const startSubscription = () => {
+              currentUnsubscribe = applyAsyncIterableIteratorToSink(
+                applyLiveQueryJSONDiffPatch(
+                  ioGraphQLClient.execute({
+                    operation: operation.query!,
+                    variables: mapVariables(operation.variables),
+                  }),
+                ),
+                // structuredClone ensures patched results are new references,
+                // required because @n1ru4l/json-patch-plus mutates in place
+                {
+                  ...sink,
+                  next: (value: any) => sink.next(structuredClone(value)),
+                  error: (error: any) => {
+                    if (
+                      !disposed &&
+                      error instanceof Error &&
+                      error.message === 'Wrong revision received.'
+                    ) {
+                      startSubscription()
+                      return
+                    }
+                    sink.error(error)
+                  },
+                },
+              )
+            }
+
+            startSubscription()
+
+            return {
+              unsubscribe: () => {
+                disposed = true
+                currentUnsubscribe?.()
               },
-            ),
-          }),
+            }
+          },
         }),
       }),
     ],
