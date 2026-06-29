@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useEffectEvent, useState, type ReactNode } from 'react'
 import { Provider as UrqlProvider } from 'urql'
 import type { ConnectionError } from '../createClient.ts'
 import type { createClient } from '../createClient.ts'
@@ -20,21 +20,30 @@ export function SocketQLProvider({
 }: SocketQLProviderProps) {
   const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
-    const unsubscribeError = client.onConnectError((err) => {
-      if (onConnectError) {
-        onConnectError(err)
-      } else {
-        setError(err)
-      }
-    })
-    const unsubscribeConnect = onConnect ? client.onConnect(onConnect) : undefined
-    client.connect()
-    return () => {
-      unsubscribeError()
-      unsubscribeConnect?.()
+  const handleConnect = useEffectEvent(() => {
+    onConnect?.()
+  })
+
+  const handleConnectError = useEffectEvent((err: ConnectionError) => {
+    if (onConnectError) {
+      onConnectError(err)
+    } else {
+      setError(err)
     }
-  }, [client, onConnect, onConnectError])
+  })
+
+  useEffect(() => {
+    client.connect()
+  }, [client])
+
+  useEffect(() => {
+    const unsubscribeConnect = client.onConnect(handleConnect)
+    const unsubscribeError = client.onConnectError(handleConnectError)
+    return () => {
+      unsubscribeConnect()
+      unsubscribeError()
+    }
+  }, [client])
 
   if (error) {
     throw error
