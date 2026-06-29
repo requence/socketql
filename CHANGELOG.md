@@ -1,5 +1,15 @@
 # @requence/socketql
 
+## 1.9.0
+
+### Minor Changes
+
+- [`fa462df`](https://github.com/requence/socketql/commit/fa462df4150e02f684fdf4aa79aefcd0d849b80c) Thanks [@Torsten85](https://github.com/Torsten85)! - Add React-aware `createClient` that wraps live query push updates in `startTransition`. This prevents live query pushes from triggering Suspense fallbacks while a `useTransition` is pending. The base `createClient` gains a `wrapLiveQueryUpdate` option for custom wrapping.
+
+### Patch Changes
+
+- [`ee4df1e`](https://github.com/requence/socketql/commit/ee4df1e0b1d7d479e8ec9a299b1bb9f87d6735f4) Thanks [@Torsten85](https://github.com/Torsten85)! - Retry live query subscription on revision mismatch instead of throwing.
+
 ## 1.8.4
 
 ### Patch Changes
