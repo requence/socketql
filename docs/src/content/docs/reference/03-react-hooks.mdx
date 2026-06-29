@@ -158,22 +158,27 @@ const [, executeDuplicate] = useMutation({
 
 ### Waiting with a predicate
 
-For fine-grained control — such as waiting for a subscription event that matches a specific ID — pass a predicate function. It is called with every incoming `OperationResult` and the pre-computed operation name, and resolves as soon as it returns `true`.
+For fine-grained control — such as waiting for a subscription event that matches an ID returned by the mutation — pass a predicate function. It receives the mutation result as its first argument, followed by each incoming `OperationResult` and the pre-computed operation name. It resolves as soon as it returns `true`.
 
 ```ts
 // waitOn type when a function:
-// (result: OperationResult, operationName: string | undefined) => boolean
+// (
+//   mutationResult: OperationResult<Data, Variables>,
+//   result: OperationResult,
+//   operationName: string | undefined,
+// ) => boolean
 
-const [, executeDuplicate] = useMutation({
-  query: DUPLICATE_ITEM_MUTATION,
-  waitOn: (result, name) =>
-    name === 'ItemChanges' && result.data?.itemChanges?.id === knownId,
-  waitOnTimeout: 3000,
+const [, executeCreate] = useMutation({
+  query: CREATE_ITEM_MUTATION,
+  waitOn: (mutationResult, result, name) =>
+    name === 'ItemCreated' &&
+    result.data?.itemCreated?.id === mutationResult.data?.createItem?.id,
+  waitOnTimeout: 5000,
 })
 ```
 
 :::note
-The predicate is registered **before** `execute()` is called, so no subscription events are missed while the mutation is in-flight. Use `waitOnTimeout` as a safety valve in case the expected event never arrives.
+The listener is registered **before** `execute()` is called and buffers any results that arrive while the mutation is in-flight. Once the mutation response is received, the buffer is flushed against the predicate — then evaluation continues in real-time for every subsequent result. The predicate may therefore be **called multiple times** until it returns `true`; keep it a pure expression with no side effects. Use `waitOnTimeout` as a safety valve in case the expected event never arrives.
 :::
 
 ---

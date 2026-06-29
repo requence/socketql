@@ -1,5 +1,5 @@
 import type { DocumentNode } from 'graphql'
-import type { Exchange, OperationResult } from 'urql'
+import type { AnyVariables, Exchange, OperationResult } from 'urql'
 import { pipe, tap } from 'wonka'
 
 import getDocumentIdentifier from '../getDocumentIdentifier.ts'
@@ -15,38 +15,76 @@ function onResult(handler: ResultHandler) {
   }
 }
 
-export function waitForResult(
-  document:
-    | string
-    | DocumentNode
-    | ((result: OperationResult, operationName: string | undefined) => boolean)
-    | (string | DocumentNode)[],
+export function waitForResultWithMutation<
+  Data = any,
+  Variables extends AnyVariables = AnyVariables,
+>(
+  predicate: (
+    mutationResult: OperationResult<Data, Variables>,
+    result: OperationResult,
+    operationName: string | undefined,
+  ) => boolean,
   timeout?: number,
-) {
-  if (typeof document === 'function') {
-    const predicate = document
-    return new Promise<void>((resolve) => {
-      let timeoutId: ReturnType<typeof setTimeout> | undefined
+): {
+  promise: Promise<void>
+  resolveMutation: (result: OperationResult<Data, Variables>) => void
+  cancel: () => void
+} {
+  const buffered: OperationResult[] = []
+  let mutationResult: OperationResult<Data, Variables> | null = null
+  let resolvePromise!: () => void
+  let unsubscribeFn!: () => void
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  let settled = false
 
-      const unsubscribe = onResult((result) => {
+  function settle() {
+    if (settled) return
+    settled = true
+    if (timeoutId) clearTimeout(timeoutId)
+    unsubscribeFn()
+    resolvePromise()
+  }
+
+  const promise = new Promise<void>((resolve) => {
+    resolvePromise = resolve
+
+    unsubscribeFn = onResult((result) => {
+      if (mutationResult !== null) {
+        // mutationResult is available — evaluate in real-time
         const name = getDocumentIdentifier(result.operation.query)
-        if (predicate(result, name)) {
-          if (timeoutId) {
-            clearTimeout(timeoutId)
-          }
-          unsubscribe()
-          resolve()
-        }
-      })
-
-      if (timeout && timeout > 0) {
-        timeoutId = setTimeout(() => {
-          unsubscribe()
-          resolve()
-        }, timeout)
+        if (predicate(mutationResult, result, name)) settle()
+      } else {
+        // mutationResult not yet known — buffer for later evaluation
+        buffered.push(result)
       }
     })
+
+    if (timeout && timeout > 0) {
+      timeoutId = setTimeout(settle, timeout)
+    }
+  })
+
+  function resolveMutation(mr: OperationResult<Data, Variables>) {
+    mutationResult = mr
+    // Flush buffer — check if any already satisfy the predicate
+    for (const result of buffered) {
+      const name = getDocumentIdentifier(result.operation.query)
+      if (predicate(mutationResult, result, name)) {
+        settle()
+        return
+      }
+    }
+    // No match in buffer — continue listening in real-time
+    buffered.length = 0
   }
+
+  return { promise, resolveMutation, cancel: settle }
+}
+
+export function waitForResult(
+  document: string | DocumentNode | (string | DocumentNode)[],
+  timeout?: number,
+) {
 
   const documents = Array.isArray(document) ? document : [document]
 

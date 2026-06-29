@@ -8,7 +8,10 @@ import {
 } from 'urql'
 
 import { useSuspensePromise } from './useSuspensePromise.ts'
-import { waitForResult } from '../exchanges/emitExchange.ts'
+import {
+  waitForResult,
+  waitForResultWithMutation,
+} from '../exchanges/emitExchange.ts'
 import getDocumentIdentifier from '../getDocumentIdentifier.ts'
 
 export type { UseMutationState, UseMutationExecute } from 'urql'
@@ -23,8 +26,12 @@ export type UseMutationArgs<
   waitOn?:
     | string
     | DocumentNode
-    | ((result: OperationResult, operationName: string | undefined) => boolean)
     | (string | DocumentNode)[]
+    | ((
+        mutationResult: OperationResult<Data, Variables>,
+        result: OperationResult,
+        operationName: string | undefined,
+      ) => boolean)
   waitOnTimeout?: number
 }
 
@@ -39,9 +46,25 @@ export function useMutation<
     useCallback(async (variables, context) => {
       const resolveSuspense =
         args.suspense === false ? () => {} : triggerSuspense()
-      const resultsReady = args.waitOn
-        ? waitForResult(args.waitOn, args.waitOnTimeout)
-        : Promise.resolve()
+
+      // Register listener BEFORE the mutation fires to avoid race conditions
+      // where the subscription event arrives before the HTTP response.
+      let resolveMutation: ((r: OperationResult<Data, Variables>) => void) | undefined
+      let cancelWait: (() => void) | undefined
+
+      const resultsReady: Promise<void> = (() => {
+        if (!args.waitOn) return Promise.resolve()
+        if (typeof args.waitOn === 'function') {
+          const { promise, resolveMutation: rm, cancel } = waitForResultWithMutation(
+            args.waitOn,
+            args.waitOnTimeout,
+          )
+          resolveMutation = rm
+          cancelWait = cancel
+          return promise
+        }
+        return waitForResult(args.waitOn, args.waitOnTimeout)
+      })()
 
       const response = await execute(variables, {
         ...context,
@@ -52,9 +75,15 @@ export function useMutation<
           : []
         ).map((v) => (typeof v === 'string' ? v : getDocumentIdentifier(v))),
       })
+
       if (!response.error) {
+        resolveMutation?.(response)
         await resultsReady
+      } else {
+        // Clean up the listener to avoid a memory leak
+        cancelWait?.()
       }
+
       resolveSuspense()
       return response
     }, []) as typeof execute,

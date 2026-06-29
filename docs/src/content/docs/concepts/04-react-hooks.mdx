@@ -91,20 +91,27 @@ function DuplicateItem() {
 }
 ```
 
-For cases where you need to match a specific event by data — such as waiting for a subscription event whose `id` matches the one returned by the mutation — pass a **predicate function** instead:
+For cases where you need to match a specific event by data — such as waiting for a subscription event whose `id` matches the one **returned by the mutation** — pass a predicate function. It receives the mutation result as its first argument, so you never need to close over mutable state:
 
 ```tsx
-function DuplicateItem({ knownId }: { knownId: string }) {
+function CreateItem() {
   const [, execute] = useMutation({
-    query: DuplicateItemDocument,
-    waitOn: (result, name) =>
-      name === 'ItemChanges' && result.data?.itemChanges?.id === knownId,
-    waitOnTimeout: 3000,
+    query: CreateItemDocument,
+    waitOn: (mutationResult, result, name) =>
+      name === 'ItemCreated' &&
+      result.data?.itemCreated?.id === mutationResult.data?.createItem?.id,
+    waitOnTimeout: 5000,
   })
 
-  return <button onClick={() => execute({ id: knownId })}>Duplicate</button>
+  return <button onClick={() => execute({ name: 'My New Item' })}>Create</button>
+  // Suspense lifts only after the ItemCreated subscription event
+  // whose id matches the newly created item.
 }
 ```
+
+:::note
+The predicate is called once per incoming result — first for any events buffered while the mutation was in-flight, then in real-time — until it returns `true`. Keep it a pure, side-effect-free expression.
+:::
 
 ### Options
 
