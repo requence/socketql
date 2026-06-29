@@ -1,3 +1,4 @@
+export * from './createClient.ts'
 export * from './SocketQLProvider.tsx'
 export * from './useQuery.ts'
 export * from './useMutation.ts'

@@ -37,6 +37,13 @@ interface ClientOptions extends Partial<
   auth?: () => Record<string, any>
   onConnect?: () => void
   onConnectError?: (error: ConnectionError) => void
+  /**
+   * Wraps the callback that pushes live query results into the URQL
+   * pipeline.  The React layer can pass `startTransition` here so
+   * that live query push updates are treated as transition updates
+   * instead of urgent ones.
+   */
+  wrapLiveQueryUpdate?: (fn: () => void) => void
 }
 
 export function createClient({
@@ -48,6 +55,7 @@ export function createClient({
   auth,
   onConnect: initialOnConnect,
   onConnectError: initialOnConnectError,
+  wrapLiveQueryUpdate = (fn) => fn(),
 }: ClientOptions = {}) {
   const manager = new SocketManager({
     path,
@@ -153,7 +161,10 @@ export function createClient({
                 // required because @n1ru4l/json-patch-plus mutates in place
                 {
                   ...sink,
-                  next: (value: any) => sink.next(structuredClone(value)),
+                  next: (value: any) =>
+                    wrapLiveQueryUpdate(() =>
+                      sink.next(structuredClone(value)),
+                    ),
                   error: (error: any) => {
                     if (
                       !disposed &&

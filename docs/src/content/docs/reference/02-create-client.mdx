@@ -25,6 +25,7 @@ The returned `SocketQLClient` extends URQL's `Client` with additional methods.
 | `auth`             | `() => Record<string, any>`           | —               | Return auth data for the connection                   |
 | `onConnect`        | `() => void`                          | —               | Called on successful connection                       |
 | `onConnectError`   | `(error: ConnectionError) => void`    | —               | Called when the connection is rejected                |
+| `wrapLiveQueryUpdate` | `(fn: () => void) => void`         | `fn => fn()`    | Wraps the callback that pushes live query results into the pipeline. See [React `createClient`](/reference/03-react-hooks/#createclient) for a practical use case. |
 
 ## Client Methods
 

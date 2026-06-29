@@ -5,6 +5,28 @@ description: API reference for the React hooks including queries, mutations, and
 
 All exports are available from `@requence/socketql/client/react`.
 
+## createClient
+
+React-aware variant of the base [`createClient`](/reference/02-create-client/). Live query push updates are automatically wrapped in React's `startTransition`, so they are treated as **transition updates** instead of urgent ones.
+
+This prevents live query pushes from triggering a Suspense fallback while a `useTransition` is pending — for example, during a branch switch where downstream components may suspend to load new data.
+
+```ts
+import { createClient } from '@requence/socketql/client/react'
+
+const client = createClient({
+  auth: () => ({ branch: localStorage.getItem('branch') }),
+})
+```
+
+The function accepts all the same [options](/reference/02-create-client/#options) as the base `createClient`. Internally it passes `startTransition` as the `wrapLiveQueryUpdate` option.
+
+:::tip
+Use this instead of importing from `@requence/socketql/client` when your app uses React Suspense boundaries and transitions.
+:::
+
+---
+
 ## SocketQLProvider
 
 Wraps URQL's `Provider` and manages the WebSocket connection lifecycle. Calls `connect()` on mount. By default, connection errors are thrown to the nearest React error boundary. Pass `onConnectError` to handle them manually instead.
