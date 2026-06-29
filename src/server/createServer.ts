@@ -264,7 +264,7 @@ export function createServer<Context>({
 
   let generatedSchema: GraphQLSchema
 
-  const subscribe = ({ contextValue, ...args }: ExecutionArgs) => {
+  const subscribe = async ({ contextValue, ...args }: ExecutionArgs) => {
     const context = contextValue as Record<string, any>
     const originalContextSymbol = Object.getOwnPropertySymbols(
       context,
@@ -274,7 +274,7 @@ export function createServer<Context>({
       ? context[originalContextSymbol]
       : context
 
-    return wrapExecute(
+    const result = await wrapExecute(
       () =>
         graphqlSubscribe({
           contextValue: {
@@ -288,6 +288,28 @@ export function createServer<Context>({
         }),
       unwrappedContext,
     )
+
+    if (
+      result != null &&
+      typeof result === 'object' &&
+      Symbol.asyncIterator in result
+    ) {
+      const iterator = (result as AsyncIterable<any>)[Symbol.asyncIterator]()
+      return {
+        [Symbol.asyncIterator]() {
+          return {
+            next: () => wrapExecute(() => iterator.next(), unwrappedContext),
+            return: () =>
+              iterator.return?.() ??
+              Promise.resolve({ value: undefined, done: true as const }),
+            throw: (err: any) =>
+              iterator.throw?.(err) ?? Promise.reject(err),
+          }
+        },
+      }
+    }
+
+    return result
   }
 
   const getSchema = () => {
