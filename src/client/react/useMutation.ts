@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 import {
   type AnyVariables,
   type DocumentInput,
+  type OperationResult,
   useMutation as useUrqlMutation,
 } from 'urql'
 
@@ -19,7 +20,11 @@ export type UseMutationArgs<
   query: DocumentInput<Data, Variables>
   invalidate?: string | DocumentNode | (string | DocumentNode)[]
   suspense?: boolean
-  waitOn?: string | DocumentNode | (string | DocumentNode)[]
+  waitOn?:
+    | string
+    | DocumentNode
+    | ((result: OperationResult, operationName: string | undefined) => boolean)
+    | (string | DocumentNode)[]
   waitOnTimeout?: number
 }
 

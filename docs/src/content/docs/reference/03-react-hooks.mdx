@@ -129,12 +129,52 @@ function useMutation<Data, Variables>(
 | `query`         | `DocumentInput`                   | —       | The mutation document                              |
 | `invalidate`    | `string \| DocumentNode \| Array` | —       | Queries to invalidate on success                   |
 | `suspense`      | `boolean`                         | `true`  | Whether to trigger Suspense during execution       |
-| `waitOn`        | `string \| DocumentNode \| Array` | —       | Wait for these queries to re-resolve before un-suspending |
+| `waitOn`        | `string \| DocumentNode \| Array \| Function` | —       | Wait for a query/subscription to emit, or resolve when a predicate returns `true` |
 | `waitOnTimeout` | `number`                          | —       | Timeout in milliseconds to resolve the wait lock early |
 
 ### Returns
 
 A tuple of `[result, execute]`, same as URQL's `useMutation`.
+
+### Waiting on queries or subscriptions
+
+`waitOn` accepts a query/subscription name (string), a `DocumentNode`, or an array of names/documents. The mutation's Suspense lock is held until one result for each specified operation flows through the exchange pipeline — which works for both queries **and** subscriptions, since all results pass through the same exchange chain.
+
+```ts
+// Wait for a live query to re-emit after invalidation
+const [, executeCreate] = useMutation({
+  query: CREATE_USER_MUTATION,
+  invalidate: 'Users',
+  waitOn: 'Users',
+})
+
+// Wait for a subscription event (e.g. list updated via subscription)
+const [, executeDuplicate] = useMutation({
+  query: DUPLICATE_ITEM_MUTATION,
+  waitOn: ITEM_CHANGES_SUBSCRIPTION,
+  waitOnTimeout: 3000,
+})
+```
+
+### Waiting with a predicate
+
+For fine-grained control — such as waiting for a subscription event that matches a specific ID — pass a predicate function. It is called with every incoming `OperationResult` and the pre-computed operation name, and resolves as soon as it returns `true`.
+
+```ts
+// waitOn type when a function:
+// (result: OperationResult, operationName: string | undefined) => boolean
+
+const [, executeDuplicate] = useMutation({
+  query: DUPLICATE_ITEM_MUTATION,
+  waitOn: (result, name) =>
+    name === 'ItemChanges' && result.data?.itemChanges?.id === knownId,
+  waitOnTimeout: 3000,
+})
+```
+
+:::note
+The predicate is registered **before** `execute()` is called, so no subscription events are missed while the mutation is in-flight. Use `waitOnTimeout` as a safety valve in case the expected event never arrives.
+:::
 
 ---
 

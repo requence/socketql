@@ -16,9 +16,38 @@ function onResult(handler: ResultHandler) {
 }
 
 export function waitForResult(
-  document: string | DocumentNode | (string | DocumentNode)[],
+  document:
+    | string
+    | DocumentNode
+    | ((result: OperationResult, operationName: string | undefined) => boolean)
+    | (string | DocumentNode)[],
   timeout?: number,
 ) {
+  if (typeof document === 'function') {
+    const predicate = document
+    return new Promise<void>((resolve) => {
+      let timeoutId: ReturnType<typeof setTimeout> | undefined
+
+      const unsubscribe = onResult((result) => {
+        const name = getDocumentIdentifier(result.operation.query)
+        if (predicate(result, name)) {
+          if (timeoutId) {
+            clearTimeout(timeoutId)
+          }
+          unsubscribe()
+          resolve()
+        }
+      })
+
+      if (timeout && timeout > 0) {
+        timeoutId = setTimeout(() => {
+          unsubscribe()
+          resolve()
+        }, timeout)
+      }
+    })
+  }
+
   const documents = Array.isArray(document) ? document : [document]
 
   const names = new Set(
